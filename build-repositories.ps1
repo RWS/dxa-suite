@@ -66,12 +66,13 @@ function BuildDotnet($buildFileLocation, $generateArtifacts) {
    Pop-Location
 }
 
-
+# Clone all dotnet repositories required
 CloneRepo "dxa-web-application-dotnet"
 CloneRepo "dxa-modules"
 CloneRepo "dxa-content-management"
 CloneRepo "graphql-client-dotnet"
 
+# Build each dotnet repository and generate artifacts
 BuildDotnet "./repositories/dxa-web-application-dotnet/ciBuild.proj" $true
 BuildDotnet "./repositories/dxa-content-management/ciBuild.proj" $true
 BuildDotnet "./repositories/dxa-modules/webapp-net/ciBuild.proj" $true
@@ -81,3 +82,26 @@ BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
 # * all nuget packages
 # * all artifacts generated from each repository
 # * build zip(s)
+$packageVersion = $version.Substring(0, $version.LastIndexOf("."))
+
+# Copy nuget packages from repositories
+New-Item -ItemType Directory -Force -Path "artifacts/dotnet/nuget" | Out-Null
+Copy-Item -Path "./repositories/graphql-client-dotnet/net/_nuget/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
+Copy-Item -Path "./repositories/dxa-content-management/_nuget/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
+Copy-Item -Path "./repositories/dxa-web-application-dotnet/_nuget/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
+Copy-Item -Path "./repositories/dxa-web-application-dotnet/_nuget/Sdl.Dxa.Framework/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
+
+
+# Copy all modules
+New-Item -ItemType Directory -Force -Path "artifacts/dotnet/modules" | Out-Null
+Copy-Item -Path "./repositories/dxa-modules/webapp-net/dist/*.$packageVersion*.zip" -Destination "artifacts/dotnet/modules" -Force
+
+# Copy DXA web application
+New-Item -ItemType Directory -Force -Path "artifacts/dotnet/web" | Out-Null
+Copy-Item -Path "./repositories/dxa-web-application-dotnet/dist/web/*" -Destination "artifacts/dotnet/web" -Recurse -Force
+
+# Copy CMS side artifacts (TBBs, Resolver, CMS content, Import/Export scripts)
+New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cms" | Out-Null
+New-Item -ItemType Directory -Force -Path "artifacts/dotnet/ImportExport" | Out-Null
+Copy-Item -Path "./repositories/dxa-content-management/dist/cms/*" -Destination "artifacts/dotnet/cms" -Recurse -Force
+Copy-Item -Path "./repositories/dxa-content-management/dist/ImportExport/*" -Destination "artifacts/dotnet/ImportExport" -Recurse -Force
