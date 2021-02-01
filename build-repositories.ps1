@@ -16,12 +16,15 @@ param (
    [bool]$update = $false,
 
    # Version to tag with
+   [Parameter(Mandatory=$true, HelpMessage="Version to tag build with. In the form of <major>.<minor>.<patch>.<build> (i.e, 2.2.9.0).")]
    [string]$version = "0.0.0.0",
 
    # True if we should first clone the repositories (they may already be cloned from a previous run)
+   [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should first clone the repositories.")]
    [bool]$clone = $true,
 
    # True if we should build the repositories (they may already be built from a previous run)
+   [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should build the repositories.")]
    [bool]$build = $true
 )
 
@@ -96,30 +99,68 @@ Write-Output "Packaging up artifacts ..."
 Write-Output "  \artifacts\dotnet will contain all DXA dotnet artifacts ..."
 $packageVersion = $version.Substring(0, $version.LastIndexOf("."))
 
+if(Test-Path -Path "./artifacts/dotnet/tmp") {
+   Remove-Item -LiteralPath "./artifacts/dotnet/tmp" -Force -Recurse | Out-Null
+}
+
 # Copy nuget packages from repositories
+Write-Output "  copying nuget packages ..."
 New-Item -ItemType Directory -Force -Path "artifacts/dotnet/nuget" | Out-Null
 Copy-Item -Path "./repositories/graphql-client-dotnet/net/_nuget/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
 Copy-Item -Path "./repositories/dxa-content-management/_nuget/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
 Copy-Item -Path "./repositories/dxa-web-application-dotnet/_nuget/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
 Copy-Item -Path "./repositories/dxa-web-application-dotnet/_nuget/Sdl.Dxa.Framework/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
 
-
 # Copy all modules
+Write-Output "  copying modules ..."
+New-Item -ItemType Directory -Force -Path "artifacts/dotnet/module_packages" | Out-Null
+Copy-Item -Path "./repositories/dxa-modules/webapp-net/dist/*.$packageVersion*.zip" -Destination "artifacts/dotnet/module_packages" -Recurse -Force
+
+# Extract all modules
+Write-Output "  extracting modules to /modules folder ..."
 New-Item -ItemType Directory -Force -Path "artifacts/dotnet/modules" | Out-Null
-Copy-Item -Path "./repositories/dxa-modules/webapp-net/dist/*.$packageVersion*.zip" -Destination "artifacts/dotnet/modules" -Force
+New-Item -ItemType Directory -Force -Path "artifacts/dotnet/tmp" | Out-Null
+Get-ChildItem "./artifacts/dotnet/module_packages" -Filter *.zip | 
+Foreach-Object {
+   $dstFolder = $_.BaseName
+   Expand-Archive -Path $_.FullName -DestinationPath "artifacts/dotnet/tmp/$dstFolder" -Force
+   Copy-Item -Path "./artifacts/dotnet/tmp/$dstFolder/modules/*" -Destination "artifacts/dotnet/modules" -Recurse -Force
+}
+if(Test-Path -Path "./artifacts/dotnet/tmp") {
+   Remove-Item -LiteralPath "./artifacts/dotnet/tmp" -Force -Recurse | Out-Null
+}
 
 # Copy DXA web application
+Write-Output "  copying DXA web application ..."
 New-Item -ItemType Directory -Force -Path "artifacts/dotnet/web" | Out-Null
 Copy-Item -Path "./repositories/dxa-web-application-dotnet/dist/web/*" -Destination "artifacts/dotnet/web" -Recurse -Force
 
 # Copy CMS side artifacts (TBBs, Resolver, CMS content, Import/Export scripts)
+Write-Output "  copying CMS components ..."
 New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cms" | Out-Null
 New-Item -ItemType Directory -Force -Path "artifacts/dotnet/ImportExport" | Out-Null
 Copy-Item -Path "./repositories/dxa-content-management/dist/cms/*" -Destination "artifacts/dotnet/cms" -Recurse -Force
 Copy-Item -Path "./repositories/dxa-content-management/dist/ImportExport/*" -Destination "artifacts/dotnet/ImportExport" -Recurse -Force
 
 
-$exclude = @("nuget")
-$files = Get-ChildItem -Path "artifacts/dotnet" -Exclude $exclude
+# Copy CIS artifacts (model-service standalone and in-process and udp-context-dxa-extension)
+Write-Output "  copying CIS components ..."
+New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis" | Out-Null
+## todo ##
+## need to build and copy all the artifacts.. this requires java build ##
+
+# Build final distribution package for DXA
+Write-Output "  building final distribution package CM_DXA$collapsedVersion.zip ..."
 $collapsedVersion = $packageVersion -replace '[.]',''
-Compress-Archive -Path $files -DestinationPath "artifacts/dotnet/CM_DXA$collapsedVersion.zip" -CompressionLevel Fastest -Update
+
+# Remove old one if it exists
+if(Test-Path "./artifacts/dotnet/CM_DXA$collapsedVersion.zip") {
+   Remove-Item -LiteralPath "./artifacts/dotnet/CM_DXA$collapsedVersion.zip" | Out-Null
+}
+
+$exclude = @("nuget", "module_packages", "tmp")
+$files = Get-ChildItem -Path "artifacts/dotnet" -Exclude $exclude
+Compress-Archive -Path $files -DestinationPath "artifacts/dotnet/CM_DXA$collapsedVersion.zip" -CompressionLevel Fastest -Force
+
+
+Write-Output "finished"
