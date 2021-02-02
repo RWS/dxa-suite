@@ -150,17 +150,19 @@ New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis" | Out-Null
 ## need to build and copy all the artifacts.. this requires java build ##
 
 # Build final distribution package for DXA
-Write-Output "  building final distribution package CM_DXA$collapsedVersion.zip ..."
+$dxa_output_archive = "SDL.DXA.NET.$packageVersion.zip"
 $collapsedVersion = $packageVersion -replace '[.]',''
 
+Write-Output "  building final distribution package $dxa_output_archive ..."
+
 # Remove old one if it exists
-if(Test-Path "./artifacts/dotnet/CM_DXA$collapsedVersion.zip") {
-   Remove-Item -LiteralPath "./artifacts/dotnet/CM_DXA$collapsedVersion.zip" | Out-Null
+if(Test-Path "./artifacts/dotnet/$dxa_output_archive") {
+   Remove-Item -LiteralPath "./artifacts/dotnet/$dxa_output_archive" | Out-Null
 }
 
 $exclude = @("nuget", "module_packages", "tmp")
 $files = Get-ChildItem -Path "artifacts/dotnet" -Exclude $exclude
-Compress-Archive -Path $files -DestinationPath "artifacts/dotnet/CM_DXA$collapsedVersion.zip" -CompressionLevel Fastest -Force
+Compress-Archive -Path $files -DestinationPath "artifacts/dotnet/$dxa_output_archive" -CompressionLevel Fastest -Force
 
 
 Write-Output "finished"
