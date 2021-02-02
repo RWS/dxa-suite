@@ -7,6 +7,10 @@
 
 [CmdletBinding( SupportsShouldProcess=$true, PositionalBinding=$false)]
 param (
+   # Version to tag with
+   [Parameter(Mandatory=$true, HelpMessage="Version to tag build with. In the form of <major>.<minor>.<patch>.<build> (i.e, 2.2.9.0).")]
+   [string]$version = "0.0.0.0",
+   
    # The Github branch name to clone
    [Parameter(Mandatory=$false, HelpMessage="Github branch name")]
    [string]$branch = "develop",
@@ -14,10 +18,6 @@ param (
    # The Github branch name to clone
    [Parameter(Mandatory=$false, HelpMessage="Force update if repository already cloned")]
    [bool]$update = $false,
-
-   # Version to tag with
-   [Parameter(Mandatory=$true, HelpMessage="Version to tag build with. In the form of <major>.<minor>.<patch>.<build> (i.e, 2.2.9.0).")]
-   [string]$version = "0.0.0.0",
 
    # True if we should first clone the repositories (they may already be cloned from a previous run)
    [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should first clone the repositories.")]
@@ -81,6 +81,7 @@ if($clone) {
    CloneRepo "dxa-modules"
    CloneRepo "dxa-content-management"
    CloneRepo "graphql-client-dotnet"
+   CloneRepo "dxa-html-design"
 }
 
 # Build each dotnet repository and generate artifacts
@@ -142,6 +143,26 @@ New-Item -ItemType Directory -Force -Path "artifacts/dotnet/ImportExport" | Out-
 Copy-Item -Path "./repositories/dxa-content-management/dist/cms/*" -Destination "artifacts/dotnet/cms" -Recurse -Force
 Copy-Item -Path "./repositories/dxa-content-management/dist/ImportExport/*" -Destination "artifacts/dotnet/ImportExport" -Recurse -Force
 
+# Copy html design src
+Write-Output "  copying html design ..."
+New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html" | Out-Null
+New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/design" | Out-Null
+New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/design/src" | Out-Null
+New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/whitelabel" | Out-Null
+Copy-Item -Path "./repositories/dxa-html-design/src/*" -Destination "artifacts/dotnet/html/design/src" -Recurse -Force
+Copy-Item -Path "./repositories/dxa-html-design/.bowerrc" -Destination "artifacts/dotnet/html/design" -Recurse -Force
+Copy-Item -Path "./repositories/dxa-html-design/bower.json" -Destination "artifacts/dotnet/html/design" -Recurse -Force
+Copy-Item -Path "./repositories/dxa-html-design/BUILD.md" -Destination "artifacts/dotnet/html/design" -Recurse -Force
+Copy-Item -Path "./repositories/dxa-html-design/Gruntfile.js" -Destination "artifacts/dotnet/html/design" -Recurse -Force
+Copy-Item -Path "./repositories/dxa-html-design/package.json" -Destination "artifacts/dotnet/html/design" -Recurse -Force
+Copy-Item -Path "./repositories/dxa-html-design/README.md" -Destination "artifacts/dotnet/html/design" -Recurse -Force
+if(Test-Path "./artifacts/dotnet/html-design.zip") {
+   Remove-Item -LiteralPath "./artifacts/dotnet/html-design.zip" | Out-Null
+}
+Compress-Archive -Path "./artifacts/dotnet/html/design/*" -DestinationPath "artifacts/dotnet/cms/html-design.zip" -CompressionLevel Fastest -Force
+if(Test-Path "./repositories/dxa-html-design/dist") {
+   Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/dotnet/html/whitelabel" -Recurse -Force
+}
 
 # Copy CIS artifacts (model-service standalone and in-process and udp-context-dxa-extension)
 Write-Output "  copying CIS components ..."
