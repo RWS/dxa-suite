@@ -75,6 +75,13 @@ function BuildDotnet($buildFileLocation, $generateArtifacts) {
    Pop-Location
 }
 
+function BuildJava($pomFileLocation, $buildCmd) {
+   Push-Location
+   Set-Location $pomFileLocation
+   Invoke-Expression "$buildCmd"
+   Pop-Location
+}
+
 # Clone all dotnet repositories required
 if($clone) {
    CloneRepo "dxa-web-application-dotnet"
@@ -91,6 +98,9 @@ if($build) {
    BuildDotnet "./repositories/dxa-content-management/ciBuild.proj" $true
    BuildDotnet "./repositories/dxa-modules/webapp-net/ciBuild.proj" $true
    BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
+
+   BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests'
+   #BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests -P in-process'
 }
 
 # Copy artifacts out to /artifacts folder
