@@ -56,6 +56,7 @@ function CloneRepo($repo) {
       }
    }
 }
+
 function RunMsBuild($buildFile, $buildParams) {   
    Invoke-MsBuild -Path $buildFile -MsBuildParameters $buildParams -ShowBuildOutputInCurrentWindow  
 }
@@ -82,6 +83,19 @@ function BuildJava($pomFileLocation, $buildCmd) {
    Pop-Location
 }
 
+# Sanity check : if you are building a release branch and the major version component is not the same as that specified by the version param to script then
+# exit
+$versionParts = $version.split('.') | % {iex $_}
+if($branch.StartsWith("release/")) {
+    $branchVersionParts = $branch.Replace("release/", "").split('.') | % {iex $_}
+    if($branchVersionParts[0] -ne $versionParts[0]) {
+        Write-Output "You are attempting to build a release branch with a different major version as specified by the version parameter !"
+        Exit
+    }
+}
+
+$isLegacy = $branch.StartsWith("release/1.") -or $version.StartsWith("1.")
+
 # Clone all dotnet repositories required
 if($clone) {
    CloneRepo "dxa-web-application-dotnet"
@@ -89,7 +103,10 @@ if($clone) {
    CloneRepo "dxa-content-management"
    CloneRepo "graphql-client-dotnet"
    CloneRepo "dxa-html-design"
-   CloneRepo "dxa-model-service"
+   if(!$isLegacy) {
+      # model-service does not exist in DXA 1.x (legacy DXA versions)
+      CloneRepo "dxa-model-service"
+   }
 }
 
 # Build each dotnet repository and generate artifacts
@@ -99,8 +116,10 @@ if($build) {
    BuildDotnet "./repositories/dxa-modules/webapp-net/ciBuild.proj" $true
    BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
 
-   BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests'
-   #BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests -P in-process'
+   if(!$isLegacy) {   
+      BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests'
+      #BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests -P in-process'
+   }
 }
 
 # Copy artifacts out to /artifacts folder
@@ -176,13 +195,15 @@ if(Test-Path "./repositories/dxa-html-design/dist") {
 }
 
 # Copy CIS artifacts (model-service standalone and in-process and udp-context-dxa-extension)
-Write-Output "  copying CIS components ..."
-New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis" | Out-Null
-New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis/dxa-model-service" | Out-Null
-if(Test-Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip") {
-   Expand-Archive -Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip" -DestinationPath "artifacts/dotnet/cis/dxa-model-service" -Force
+# only for non-legacy (DXA 2.x+)
+if(!$isLegacy) {
+   Write-Output "  copying CIS components ..."
+   New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis" | Out-Null
+   New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis/dxa-model-service" | Out-Null
+   if(Test-Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip") {
+      Expand-Archive -Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip" -DestinationPath "artifacts/dotnet/cis/dxa-model-service" -Force
+   }
 }
-
 
 # Build final distribution package for DXA
 $dxa_output_archive = "SDL.DXA.NET.$packageVersion.zip"
