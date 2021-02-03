@@ -82,6 +82,7 @@ if($clone) {
    CloneRepo "dxa-content-management"
    CloneRepo "graphql-client-dotnet"
    CloneRepo "dxa-html-design"
+   CloneRepo "dxa-model-service"
 }
 
 # Build each dotnet repository and generate artifacts
@@ -167,8 +168,11 @@ if(Test-Path "./repositories/dxa-html-design/dist") {
 # Copy CIS artifacts (model-service standalone and in-process and udp-context-dxa-extension)
 Write-Output "  copying CIS components ..."
 New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis" | Out-Null
-## todo ##
-## need to build and copy all the artifacts.. this requires java build ##
+New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis/dxa-model-service" | Out-Null
+if(Test-Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip") {
+   Expand-Archive -Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip" -DestinationPath "artifacts/dotnet/cis/dxa-model-service" -Force
+}
+
 
 # Build final distribution package for DXA
 $dxa_output_archive = "SDL.DXA.NET.$packageVersion.zip"
@@ -184,6 +188,5 @@ if(Test-Path "./artifacts/dotnet/$dxa_output_archive") {
 $exclude = @("nuget", "module_packages", "tmp")
 $files = Get-ChildItem -Path "artifacts/dotnet" -Exclude $exclude
 Compress-Archive -Path $files -DestinationPath "artifacts/dotnet/$dxa_output_archive" -CompressionLevel Fastest -Force
-
 
 Write-Output "finished"
