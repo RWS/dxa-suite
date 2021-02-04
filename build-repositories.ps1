@@ -16,6 +16,10 @@ param (
    [string]$branch = "develop",
 
    # The Github branch name to clone
+   [Parameter(Mandatory=$false, HelpMessage="Github model-service branch name")]
+   [string]$modelServiceBranch = "develop",
+
+   # The Github branch name to clone
    [Parameter(Mandatory=$false, HelpMessage="Force update if repository already cloned")]
    [bool]$update = $false,
 
@@ -25,7 +29,15 @@ param (
 
    # True if we should build the repositories (they may already be built from a previous run)
    [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should build the repositories.")]
-   [bool]$build = $true
+   [bool]$build = $true,
+
+   # True if we should build the model-service
+   [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should build the model-service.")]
+   [bool]$buildModelService = $false,
+
+   # True if we should clean out all previously cloned repositories and built artifacts
+   [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should clean out any previously cloned repositories or built artifacts.")]
+   [bool]$clean = $false
 )
 
 
@@ -37,22 +49,22 @@ $PSScriptDir = Split-Path $MyInvocation.MyCommand.Path
 # Import msbuild helper module
 Import-Module -Name "$PSScriptDir/utils/Invoke-MsBuild.psm1"
 
-function CloneRepo($repo) {
+function CloneRepo($repo, $branchName) {
    Write-Output "> Cloning github repository $repo ..."
    $dst = "./repositories/$repo"
    $github_repo_url = "https://github.com/sdl"
    if(!(Test-Path -Path $dst)) {
-      $cmd = "git clone --branch $branch --recursive $github_repo_url/$repo.git ./repositories/$repo"
+      $cmd = "git clone --branch $branchName --recursive $github_repo_url/$repo.git ./repositories/$repo"
       Invoke-Expression $cmd
    }
    else {    
       if($update) {
          Write-Output "> Updating existing cloned repository ..."
          Invoke-Expression "git checkout -- ." 
-         Invoke-Expression "git checkout $branch"         
+         Invoke-Expression "git checkout $branchName"         
       } else {
          Write-Output "> Already cloned repository ..."
-         Invoke-Expression "git checkout $branch"
+         Invoke-Expression "git checkout $branchName"
       }
    }
 }
@@ -96,16 +108,30 @@ if($branch.StartsWith("release/")) {
 
 $isLegacy = $branch.StartsWith("release/1.") -or $version.StartsWith("1.")
 
+if($clean) {
+   Write-Output "Cleaning previously cloned+built repositories & artifacts"
+   if(Test-Path "./artifacts") {
+      Remove-Item -LiteralPath "./artifacts" -Recurse -Force | Out-Null
+   }   
+
+   if(Test-Path "./repositories") {
+      Remove-Item -LiteralPath "./repositories" -Recurse -Force | Out-Null
+   }   
+}
+
 # Clone all dotnet repositories required
 if($clone) {
-   CloneRepo "dxa-web-application-dotnet"
-   CloneRepo "dxa-modules"
-   CloneRepo "dxa-content-management"
-   CloneRepo "dxa-html-design"
+   CloneRepo "dxa-web-application-dotnet" "$branch"
+   CloneRepo "dxa-modules" "$branch"
+   CloneRepo "dxa-content-management" "$branch"
+   CloneRepo "dxa-html-design" "$branch"
    if(!$isLegacy) {
       # model-service & graphql client does not exist in DXA 1.x (legacy DXA versions)
-      CloneRepo "graphql-client-dotnet"
-      CloneRepo "dxa-model-service"
+      CloneRepo "graphql-client-dotnet" "$branch"
+
+      if($buildModelService) {
+         CloneRepo "dxa-model-service" "$modelServiceBranch"
+      }
    }
 }
 
@@ -117,7 +143,11 @@ if($build) {
 
    if(!$isLegacy) {   
       BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
+   }
+}
 
+if($buildModelService) {
+   if(!$isLegacy) {   
       BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests'
       #BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests -P in-process'
    }
@@ -174,45 +204,52 @@ if(Test-Path -Path "./artifacts/dotnet/tmp") {
 }
 
 # Copy DXA web application
-Write-Output "  copying DXA web application ..."
-New-Item -ItemType Directory -Force -Path "artifacts/dotnet/web" | Out-Null
-Copy-Item -Path "./repositories/dxa-web-application-dotnet/dist/web/*" -Destination "artifacts/dotnet/web" -Recurse -Force
+if(Test-Path -Path "./repositories/dxa-web-application-dotnet/dist/web") {
+   Write-Output "  copying DXA web application ..."
+   New-Item -ItemType Directory -Force -Path "artifacts/dotnet/web" | Out-Null
+   Copy-Item -Path "./repositories/dxa-web-application-dotnet/dist/web/*" -Destination "artifacts/dotnet/web" -Recurse -Force
+}
+
 
 # Copy CMS side artifacts (TBBs, Resolver, CMS content, Import/Export scripts)
-Write-Output "  copying CMS components ..."
-New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cms" | Out-Null
-New-Item -ItemType Directory -Force -Path "artifacts/dotnet/ImportExport" | Out-Null
-Copy-Item -Path "./repositories/dxa-content-management/dist/cms/*" -Destination "artifacts/dotnet/cms" -Recurse -Force
-Copy-Item -Path "./repositories/dxa-content-management/dist/ImportExport/*" -Destination "artifacts/dotnet/ImportExport" -Recurse -Force
+if(Test-Path -Path "./repositories/dxa-content-management/dist") {
+   Write-Output "  copying CMS components ..."
+   New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cms" | Out-Null
+   New-Item -ItemType Directory -Force -Path "artifacts/dotnet/ImportExport" | Out-Null
+   Copy-Item -Path "./repositories/dxa-content-management/dist/cms/*" -Destination "artifacts/dotnet/cms" -Recurse -Force
+   Copy-Item -Path "./repositories/dxa-content-management/dist/ImportExport/*" -Destination "artifacts/dotnet/ImportExport" -Recurse -Force
+}
 
 # Copy html design src
-Write-Output "  copying html design ..."
-New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html" | Out-Null
-New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/design" | Out-Null
-New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/design/src" | Out-Null
-New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/whitelabel" | Out-Null
-Copy-Item -Path "./repositories/dxa-html-design/src/*" -Destination "artifacts/dotnet/html/design/src" -Recurse -Force -ErrorAction SilentlyContinue
-Copy-Item -Path "./repositories/dxa-html-design/.bowerrc" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
-Copy-Item -Path "./repositories/dxa-html-design/bower.json" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
-Copy-Item -Path "./repositories/dxa-html-design/BUILD.md" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
-Copy-Item -Path "./repositories/dxa-html-design/Gruntfile.js" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
-Copy-Item -Path "./repositories/dxa-html-design/package.json" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
-Copy-Item -Path "./repositories/dxa-html-design/README.md" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
-if(Test-Path "./artifacts/dotnet/html-design.zip") {
-   Remove-Item -LiteralPath "./artifacts/dotnet/html-design.zip" | Out-Null
-}
-Compress-Archive -Path "./artifacts/dotnet/html/design/*" -DestinationPath "artifacts/dotnet/cms/html-design.zip" -CompressionLevel Fastest -Force
-if(Test-Path "./repositories/dxa-html-design/dist") {
-   Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/dotnet/html/whitelabel" -Recurse -Force
+if(Test-Path -Path "./repositories/dxa-html-design") {
+   Write-Output "  copying html design ..."
+   New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html" | Out-Null
+   New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/design" | Out-Null
+   New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/design/src" | Out-Null
+   New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/whitelabel" | Out-Null
+   Copy-Item -Path "./repositories/dxa-html-design/src/*" -Destination "artifacts/dotnet/html/design/src" -Recurse -Force -ErrorAction SilentlyContinue
+   Copy-Item -Path "./repositories/dxa-html-design/.bowerrc" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+   Copy-Item -Path "./repositories/dxa-html-design/bower.json" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+   Copy-Item -Path "./repositories/dxa-html-design/BUILD.md" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+   Copy-Item -Path "./repositories/dxa-html-design/Gruntfile.js" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+   Copy-Item -Path "./repositories/dxa-html-design/package.json" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+   Copy-Item -Path "./repositories/dxa-html-design/README.md" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+   if(Test-Path "./artifacts/dotnet/html-design.zip") {
+      Remove-Item -LiteralPath "./artifacts/dotnet/html-design.zip" | Out-Null
+   }
+   Compress-Archive -Path "./artifacts/dotnet/html/design/*" -DestinationPath "artifacts/dotnet/cms/html-design.zip" -CompressionLevel Fastest -Force
+   if(Test-Path "./repositories/dxa-html-design/dist") {
+      Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/dotnet/html/whitelabel" -Recurse -Force
+   }
 }
 
 # Copy CIS artifacts (model-service standalone and in-process and udp-context-dxa-extension)
 # only for non-legacy (DXA 2.x+)
 if(!$isLegacy) {
-   Write-Output "  copying CIS components ..."
-   New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis" | Out-Null
-   New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis/dxa-model-service" | Out-Null
    if(Test-Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip") {
+      Write-Output "  copying CIS components ..."
+      New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis" | Out-Null
+      New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis/dxa-model-service" | Out-Null
       Expand-Archive -Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip" -DestinationPath "artifacts/dotnet/cis/dxa-model-service" -Force
    }
 }
