@@ -111,7 +111,7 @@ if($branch -like "develop" -and $version.StartsWith("1.")) {
    Exit
 }
 
-if($branch -like "release/1." -and $versionParts[0] > 1) {
+if($branch -like "release/1." -and $versionParts[0] -gt 1) {
    Write-Output "You are trying to build a release/1.x branch and tag with a major version greater than 1 !"
    Exit
 }
