@@ -101,10 +101,10 @@ if($clone) {
    CloneRepo "dxa-web-application-dotnet"
    CloneRepo "dxa-modules"
    CloneRepo "dxa-content-management"
-   CloneRepo "graphql-client-dotnet"
    CloneRepo "dxa-html-design"
    if(!$isLegacy) {
-      # model-service does not exist in DXA 1.x (legacy DXA versions)
+      # model-service & graphql client does not exist in DXA 1.x (legacy DXA versions)
+      CloneRepo "graphql-client-dotnet"
       CloneRepo "dxa-model-service"
    }
 }
@@ -114,9 +114,10 @@ if($build) {
    BuildDotnet "./repositories/dxa-web-application-dotnet/ciBuild.proj" $true
    BuildDotnet "./repositories/dxa-content-management/ciBuild.proj" $true
    BuildDotnet "./repositories/dxa-modules/webapp-net/ciBuild.proj" $true
-   BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
 
    if(!$isLegacy) {   
+      BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
+
       BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests'
       #BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests -P in-process'
    }
@@ -137,15 +138,26 @@ if(Test-Path -Path "./artifacts/dotnet/tmp") {
 # Copy nuget packages from repositories
 Write-Output "  copying nuget packages ..."
 New-Item -ItemType Directory -Force -Path "artifacts/dotnet/nuget" | Out-Null
-Copy-Item -Path "./repositories/graphql-client-dotnet/net/_nuget/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
-Copy-Item -Path "./repositories/dxa-content-management/_nuget/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
-Copy-Item -Path "./repositories/dxa-web-application-dotnet/_nuget/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
-Copy-Item -Path "./repositories/dxa-web-application-dotnet/_nuget/Sdl.Dxa.Framework/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
+if(Test-Path -Path "./repositories/dxa-content-management/_nuget") {
+   Copy-Item -Path "./repositories/dxa-content-management/_nuget/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
+}
+if(Test-Path -Path "./repositories/dxa-web-application-dotnet/_nuget") {
+   Copy-Item -Path "./repositories/dxa-web-application-dotnet/_nuget/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
+}
+if(Test-Path -Path "./repositories/dxa-web-application-dotnet/_nuget/Sdl.Dxa.Framework") {
+   Copy-Item -Path "./repositories/dxa-web-application-dotnet/_nuget/Sdl.Dxa.Framework/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
+}
+if(Test-Path -Path "./repositories/graphql-client-dotnet/net/_nuget") {
+   Copy-Item -Path "./repositories/graphql-client-dotnet/net/_nuget/*.$packageVersion*.nupkg" -Destination "artifacts/dotnet/nuget"
+}
+
 
 # Copy all modules
 Write-Output "  copying modules ..."
 New-Item -ItemType Directory -Force -Path "artifacts/dotnet/module_packages" | Out-Null
-Copy-Item -Path "./repositories/dxa-modules/webapp-net/dist/*.$packageVersion*.zip" -Destination "artifacts/dotnet/module_packages" -Recurse -Force
+if(Test-Path -Path "./repositories/dxa-modules/webapp-net/dist") {
+   Copy-Item -Path "./repositories/dxa-modules/webapp-net/dist/*.$packageVersion*.zip" -Destination "artifacts/dotnet/module_packages" -Recurse -Force
+}
 
 # Extract all modules
 Write-Output "  extracting modules to /modules folder ..."
@@ -179,13 +191,13 @@ New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html" | Out-Null
 New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/design" | Out-Null
 New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/design/src" | Out-Null
 New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/whitelabel" | Out-Null
-Copy-Item -Path "./repositories/dxa-html-design/src/*" -Destination "artifacts/dotnet/html/design/src" -Recurse -Force
-Copy-Item -Path "./repositories/dxa-html-design/.bowerrc" -Destination "artifacts/dotnet/html/design" -Recurse -Force
-Copy-Item -Path "./repositories/dxa-html-design/bower.json" -Destination "artifacts/dotnet/html/design" -Recurse -Force
-Copy-Item -Path "./repositories/dxa-html-design/BUILD.md" -Destination "artifacts/dotnet/html/design" -Recurse -Force
-Copy-Item -Path "./repositories/dxa-html-design/Gruntfile.js" -Destination "artifacts/dotnet/html/design" -Recurse -Force
-Copy-Item -Path "./repositories/dxa-html-design/package.json" -Destination "artifacts/dotnet/html/design" -Recurse -Force
-Copy-Item -Path "./repositories/dxa-html-design/README.md" -Destination "artifacts/dotnet/html/design" -Recurse -Force
+Copy-Item -Path "./repositories/dxa-html-design/src/*" -Destination "artifacts/dotnet/html/design/src" -Recurse -Force -ErrorAction SilentlyContinue
+Copy-Item -Path "./repositories/dxa-html-design/.bowerrc" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+Copy-Item -Path "./repositories/dxa-html-design/bower.json" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+Copy-Item -Path "./repositories/dxa-html-design/BUILD.md" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+Copy-Item -Path "./repositories/dxa-html-design/Gruntfile.js" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+Copy-Item -Path "./repositories/dxa-html-design/package.json" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+Copy-Item -Path "./repositories/dxa-html-design/README.md" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
 if(Test-Path "./artifacts/dotnet/html-design.zip") {
    Remove-Item -LiteralPath "./artifacts/dotnet/html-design.zip" | Out-Null
 }
