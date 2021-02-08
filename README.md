@@ -11,6 +11,7 @@ For building .NET repositories you must have the following installed:
 For building Java repositories you must have the following installed:
 - Maven 3.2+
 - Maven should be available in the system PATH
+- Java 1.8
 
 About
 -----
