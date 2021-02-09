@@ -54,7 +54,7 @@ $PSScriptDir = Split-Path $MyInvocation.MyCommand.Path
 Import-Module -Name "$PSScriptDir/utils/Invoke-MsBuild.psm1"
 
 function CloneRepo($repo, $branchName) {
-   Write-Output "> Cloning github repository $repo ..."
+   Write-Output "    > Cloning github repository $repo ..."
    $dst = "./repositories/$repo"
    $github_repo_url = "https://github.com/sdl"
    if(!(Test-Path -Path $dst)) {
@@ -63,11 +63,11 @@ function CloneRepo($repo, $branchName) {
    }
    else {    
       if($update) {
-         Write-Output "> Updating existing cloned repository ..."
+         Write-Output "    > Updating existing cloned repository ..."
          Invoke-Expression "git checkout -- ." 
          Invoke-Expression "git checkout $branchName"         
       } else {
-         Write-Output "> Already cloned repository ..."
+         Write-Output "    > Already cloned repository ..."
          Invoke-Expression "git checkout $branchName"
       }
    }
@@ -139,7 +139,7 @@ if($clean) {
 # Clone all dotnet/java repositories required
 if($clone) {
    Write-Output ""
-   Write-Output "Cloning github .NET/Java repository ..."
+   Write-Output "Cloning github .NET/Java modules repository ..."
    CloneRepo "dxa-modules" "$branch"
 
    Write-Output ""
@@ -167,7 +167,11 @@ if($clone) {
 }
 
 # Build each dotnet repository and generate artifacts
-if($build) {
+if($build)
+{
+if ($false)
+{
+
    Write-Output "Building .NET (DXA framework) ..."
    BuildDotnet "./repositories/dxa-web-application-dotnet/ciBuild.proj" $true
    Write-Output "Building .NET (CM) ..."
@@ -175,12 +179,15 @@ if($build) {
    Write-Output "Building .NET (DXA modules) ..."
    BuildDotnet "./repositories/dxa-modules/webapp-net/ciBuild.proj" $true
 
-   if(!$isLegacy) {
+   if (!$isLegacy)
+   {
       Write-Output "Building .NET (GraphQL client) ..."
       BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
    }
    Write-Output ""
    Write-Output ""
+}
+
    Write-Output "Building Java (DXA framework) ..."
    BuildJava "./repositories/dxa-web-application-java" 'mvn clean install -DskipTests'
    Write-Output "Building Java (DXA modules) ..."
@@ -275,6 +282,25 @@ Write-Output "Packaging Java is done."
 Write-Output ""
 Write-Output ""
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+if ($false) {
 
 # Copy artifacts out to /artifacts folder
 # * all nuget packages
@@ -411,3 +437,4 @@ Write-Output ""
 Write-Output ""
 
 
+}
