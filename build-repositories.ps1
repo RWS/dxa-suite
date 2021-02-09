@@ -261,6 +261,8 @@ $dir = "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/t
 Expand-Archive -Path $dir -DestinationPath "artifacts/java/tmp/ms-assembly/" -Force
 Move-Item -Path "artifacts/java/tmp/ms-assembly/standalone-in-process/" -Destination "artifacts/java/cis/dxa-model-service/"
 
+Remove-Item -LiteralPath "./artifacts/java/tmp/ms-assembly/" -Force -Recurse | Out-Null
+
 Write-Output "Unpacking UDP Content Service DXA extension ..."
 New-Item -ItemType Directory -Force -Path "artifacts/java/cis/udp-content-dxa-extension/" | Out-Null
 Write-Warning "udp-content-dxa-extension.jar is not provided FTM"
