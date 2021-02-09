@@ -163,26 +163,26 @@ if($clone) {
 # Build each dotnet repository and generate artifacts
 if($build) {
    Write-Output "Building .NET (DXA framework) ..."
-#   BuildDotnet "./repositories/dxa-web-application-dotnet/ciBuild.proj" $true
+   BuildDotnet "./repositories/dxa-web-application-dotnet/ciBuild.proj" $true
    Write-Output "Building .NET (CM) ..."
-#   BuildDotnet "./repositories/dxa-content-management/ciBuild.proj" $true
+   BuildDotnet "./repositories/dxa-content-management/ciBuild.proj" $true
    Write-Output "Building .NET (DXA modules) ..."
-#   BuildDotnet "./repositories/dxa-modules/webapp-net/ciBuild.proj" $true
+   BuildDotnet "./repositories/dxa-modules/webapp-net/ciBuild.proj" $true
 
    if(!$isLegacy) {
       Write-Output "Building .NET (GraphQL client) ..."
-#      BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
+      BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
    }
    Write-Output ""
    Write-Output ""
    Write-Output "Building Java (DXA framework) ..."
-#   BuildJava "./repositories/dxa-web-application-java" 'mvn clean install -DskipTests'
+   BuildJava "./repositories/dxa-web-application-java" 'mvn clean install -DskipTests'
    Write-Output "Building Java (DXA modules) ..."
-#   BuildJava "./repositories/dxa-modules/webapp-java" 'mvn clean install -DskipTests'
+   BuildJava "./repositories/dxa-modules/webapp-java" 'mvn clean install -DskipTests'
    if($buildModelService) {
       if(!$isLegacy) {
          Write-Output "Building Java (DXA model service) ..."
-#         BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests'
+         BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests'
          #BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests -P in-process'
       }
    }
@@ -226,21 +226,51 @@ if(Test-Path -Path "./artifacts/java/tmp") {
 # Copy all modules
 Write-Output "  copying modules ..."
 New-Item -ItemType Directory -Force -Path "artifacts/java/module_packages" | Out-Null
+if ($false)
+{
+   $dir = Get-ChildItem "./repositories/dxa-modules/webapp-java/"
+   $dir | ForEach-Object {
+      $sourcePath = $_.FullName + "/target/"
+      if (Test-Path -Path $sourcePath)
+      {
+         Get-ChildItem $sourcePath -Filter *.jar |
+                 Foreach-Object {
+                    $targetPath = "artifacts/java/module_packages/" + $_.Name
+                    Write-Output $_.FullName
 
-$dir = Get-ChildItem  "./repositories/dxa-modules/webapp-java/"
-$dir | ForEach-Object {
-   $sourcePath = $_.FullName + "/target/"
-   if(Test-Path -Path $sourcePath)  {
-      Get-ChildItem $sourcePath -Filter *.jar |
-           Foreach-Object {
-              $targetPath = "artifacts/java/module_packages/" + $_.Name
-              Write-Output $_.FullName
-
-              Copy-Item -Path $sourcePath -Destination $targetPath
-           }
+                    Copy-Item -Path $sourcePath -Destination $targetPath
+                 }
+      }
    }
 }
 
+Write-Output "Processing DXA Model Service  ..."
+New-Item -ItemType Directory -Force -Path "artifacts/java/cis/dxa-model-service/" | Out-Null
+if (Test-Path -Path "./artifacts/java/cis/dxa-model-service/")
+{
+   Remove-Item -LiteralPath "./artifacts/java/cis/dxa-model-service/" -Force -Recurse | Out-Null
+}
+
+Write-Output "Unpacking DXA MS standalone ..."
+$dir = "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip"
+Expand-Archive -Path $dir -DestinationPath "artifacts/java/tmp/ms-assembly/" -Force
+Move-Item -Path "artifacts/java/tmp/ms-assembly/" -Destination "artifacts/java/cis/dxa-model-service/"
+
+Write-Output "Unpacking DXA MS standalone-in-process ..."
+$dir = "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service.zip"
+Expand-Archive -Path $dir -DestinationPath "artifacts/java/tmp/ms-assembly/" -Force
+Move-Item -Path "artifacts/java/tmp/ms-assembly/standalone-in-process/" -Destination "artifacts/java/cis/dxa-model-service/"
+
+Write-Output "Unpacking UDP Content Service DXA extension ..."
+New-Item -ItemType Directory -Force -Path "artifacts/java/cis/udp-content-dxa-extension/" | Out-Null
+Write-Warning "udp-content-dxa-extension.jar is not provided FTM"
+
+Write-Output "Processing DXA-suite web installer ..."
+# e:\projects\dxa-suite\ddd\SDL DXA Java 2.2\web\installer\
+
+Write-Output "DXA MS prepared in /cis"
+Write-Output ""
+Write-Output ""
 
 
 
