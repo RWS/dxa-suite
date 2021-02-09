@@ -268,14 +268,15 @@ New-Item -ItemType Directory -Force -Path "artifacts/java/cis/udp-content-dxa-ex
 Write-Warning "udp-content-dxa-extension.jar is not provided FTM"
 
 Write-Output "Processing DXA-suite web installer ..."
-# e:\projects\dxa-suite\ddd\SDL DXA Java 2.2\web\installer\
+Write-Warning "/web/installer/ is not provided FTM"
+# \SDL DXA Java 2.2\web\installer\
 
 Write-Output "DXA MS prepared in /cis"
 Write-Output ""
 Write-Output ""
 
 
-
+Remove-Item -LiteralPath "./artifacts/java/tmp/" -Force -Recurse | Out-Null
 Write-Output "Packaging Java is done."
 Write-Output ""
 Write-Output ""
