@@ -268,7 +268,7 @@ Write-Output ""
 Remove-Item -LiteralPath "./artifacts/java/tmp/" -Force -Recurse | Out-Null
 $exclude = @("tmp")
 $files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
-$dxa_output_archive = "SDL.DXA.JAVA.$packageVersion.zip"
+$dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
 Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Fastest -Force
 
 Write-Output "Packaging Java is done."
