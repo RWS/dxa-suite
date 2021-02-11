@@ -201,7 +201,7 @@ if($build)
       Write-Output "Building PCA (GraphQL) client ..."
       BuildJava "./repositories/graphql-client-java" 'mvn clean install -DskipTests'
    }
-   
+
    Write-Output "Downloading Java (DXA extension) ..."
    BuildJava "./repositories/udp-extension-downloader" 'mvn clean install -DskipTests'
    Write-Output "  copying udp-extension ..."
@@ -255,15 +255,21 @@ if ($build)
    {
       Remove-Item -LiteralPath "./artifacts/java/cis/dxa-model-service/" -Force -Recurse | Out-Null
    }
+   if (Test-Path -Path "./artifacts/java/tmp/ms-assembly/"){
+       Remove-Item -LiteralPath "./artifacts/java/tmp/ms-assembly/" -Force -Recurse | Out-Null
+   }
+   $destPath = "artifacts/java/tmp/ms-assembly"
    Write-Output "Unpacking DXA MS standalone ..."
+   New-Item -ItemType Directory -Force -Path $destPath | Out-Null
    $dir = "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip"
-   Expand-Archive -Path $dir -DestinationPath "artifacts/java/tmp/ms-assembly/" -Force
-   Move-Item -Path "artifacts/java/tmp/ms-assembly/" -Destination "artifacts/java/cis/dxa-model-service/"
+   Expand-Archive -Path $dir -DestinationPath $destPath -Force
+   Move-Item -Path $destPath -Destination "artifacts/java/cis/dxa-model-service/"
 
    Write-Output "Unpacking DXA MS standalone-in-process ..."
+   New-Item -ItemType Directory -Force -Path $destPath | Out-Null
    $dir = "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service.zip"
-   Expand-Archive -Path $dir -DestinationPath "artifacts/java/tmp/ms-assembly/" -Force
-   Move-Item -Path "artifacts/java/tmp/ms-assembly/standalone-in-process/" -Destination "artifacts/java/cis/dxa-model-service/"
+   Expand-Archive -Path $dir -DestinationPath $destPath -Force
+   Move-Item -Path "$destPath/standalone-in-process/" -Destination "artifacts/java/cis/dxa-model-service/"
 }
 if (Test-Path -Path "./artifacts/java/tmp/ms-assembly/"){
    Remove-Item -LiteralPath "./artifacts/java/tmp/ms-assembly/" -Force -Recurse | Out-Null
@@ -286,6 +292,7 @@ if (Test-Path -Path "./artifacts/java/tmp/") {
 if (Test-Path -Path "./repositories/dxa-content-management/dist")
 {
    Write-Output "  copying CMS components ..."
+#   C:\dxa-suite\repositories\dxa-content-management\dist\ImportExport
    New-Item -ItemType Directory -Force -Path "artifacts/java/cms" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/java/ImportExport" | Out-Null
    Copy-Item -Path "./repositories/dxa-content-management/dist/cms/*" -Destination "artifacts/java/cms" -Recurse -Force
@@ -314,7 +321,7 @@ if (Test-Path -Path "./repositories/dxa-html-design")
    {
       Remove-Item -LiteralPath "./artifacts/java/html-design.zip" | Out-Null
    }
-   Compress-Archive -Path "./artifacts/java/html/design/*" -DestinationPath "artifacts/java/cms/html-design.zip" -CompressionLevel Fast -Force
+   Compress-Archive -Path "./artifacts/java/html/design/*" -DestinationPath "artifacts/java/cms/html-design.zip" -CompressionLevel Optimal -Force
    if (Test-Path "./repositories/dxa-html-design/dist")
    {
       Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/java/html/whitelabel" -Recurse -Force
@@ -337,7 +344,7 @@ if (Test-Path -Path "./repositories/dxa-html-design")
 $exclude = @("tmp")
 $files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
 $dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
-Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Fast -Force
+Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Optimal -Force
 
 
 Write-Output "Packaging Java is done."
@@ -457,7 +464,7 @@ if (Test-Path -Path "./repositories/dxa-html-design")
    {
       Remove-Item -LiteralPath "./artifacts/dotnet/html-design.zip" | Out-Null
    }
-   Compress-Archive -Path "./artifacts/dotnet/html/design/*" -DestinationPath "artifacts/dotnet/cms/html-design.zip" -CompressionLevel Fast -Force
+   Compress-Archive -Path "./artifacts/dotnet/html/design/*" -DestinationPath "artifacts/dotnet/cms/html-design.zip" -CompressionLevel Optimal -Force
    if (Test-Path "./repositories/dxa-html-design/dist")
    {
       Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/dotnet/html/whitelabel" -Recurse -Force
@@ -491,7 +498,7 @@ if (Test-Path "./artifacts/dotnet/$dxa_output_archive")
 
 $exclude = @("nuget", "module_packages", "tmp")
 $files = Get-ChildItem -Path "artifacts/dotnet" -Exclude $exclude
-Compress-Archive -Path $files -DestinationPath "artifacts/dotnet/$dxa_output_archive" -CompressionLevel Fast -Force
+Compress-Archive -Path $files -DestinationPath "artifacts/dotnet/$dxa_output_archive" -CompressionLevel Optimal -Force
 
 Write-Output "Packaging .NET is done."
 Write-Output ""
