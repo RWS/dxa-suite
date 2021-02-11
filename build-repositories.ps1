@@ -274,6 +274,15 @@ $files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
 $dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
 Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Fastest -Force
 
+# Copy CMS side artifacts (TBBs, Resolver, CMS content, Import/Export scripts)
+if (Test-Path -Path "./repositories/dxa-content-management/dist")
+{
+   Write-Output "  copying CMS components ..."
+   New-Item -ItemType Directory -Force -Path "artifacts/java/cms" | Out-Null
+   New-Item -ItemType Directory -Force -Path "artifacts/java/ImportExport" | Out-Null
+   Copy-Item -Path "./repositories/dxa-content-management/dist/cms/*" -Destination "artifacts/java/cms" -Recurse -Force
+   Copy-Item -Path "./repositories/dxa-content-management/dist/ImportExport/*" -Destination "artifacts/java/ImportExport" -Recurse -Force
+}
 # Copy html design src
 if (Test-Path -Path "./repositories/dxa-html-design")
 {
