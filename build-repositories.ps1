@@ -154,6 +154,7 @@ if($clone) {
    Write-Output ""
    Write-Output "Cloning github Java repositories ..."
    CloneRepo "dxa-web-application-java" "$webappJavaBranch"
+#   CloneRepo "udp-extension-downloader" "$branch"
    if(!$isLegacy) {
       if($buildModelService)
       {
@@ -169,28 +170,37 @@ if($clone) {
 # Build each dotnet repository and generate artifacts
 if($build)
 {
-   Write-Output "Building .NET (DXA framework) ..."
-   BuildDotnet "./repositories/dxa-web-application-dotnet/ciBuild.proj" $true
-   Write-Output "Building .NET (CM) ..."
-   BuildDotnet "./repositories/dxa-content-management/ciBuild.proj" $true
-   Write-Output "Building .NET (DXA modules) ..."
-   BuildDotnet "./repositories/dxa-modules/webapp-net/ciBuild.proj" $true
 
-   if (!$isLegacy)
+   if ($false)
    {
-      Write-Output "Building .NET (GraphQL client) ..."
-      BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
+
+      Write-Output "Building .NET (DXA framework) ..."
+      BuildDotnet "./repositories/dxa-web-application-dotnet/ciBuild.proj" $true
+      Write-Output "Building .NET (CM) ..."
+      BuildDotnet "./repositories/dxa-content-management/ciBuild.proj" $true
+      Write-Output "Building .NET (DXA modules) ..."
+      BuildDotnet "./repositories/dxa-modules/webapp-net/ciBuild.proj" $true
+
+      if (!$isLegacy)
+      {
+         Write-Output "Building .NET (GraphQL client) ..."
+         BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
+      }
+      Write-Output ""
+      Write-Output ""
    }
-   Write-Output ""
-   Write-Output ""
+if ($false)
+{
 
    Write-Output "Building Java (DXA framework) ..."
    BuildJava "./repositories/dxa-web-application-java" 'mvn clean install -DskipTests'
    Write-Output "Building Java (DXA modules) ..."
    BuildJava "./repositories/dxa-modules/webapp-java" 'mvn clean install -DskipTests'
 
-   if(!$isLegacy) {
-      if($buildModelService) {
+   if (!$isLegacy)
+   {
+      if ($buildModelService)
+      {
          Write-Output "Building Java (DXA model service) ..."
          BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests'
          #BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests -P in-process'
@@ -198,6 +208,10 @@ if($build)
       Write-Output "Building PCA (GraphQL) client ..."
       BuildJava "./repositories/graphql-client-java" 'mvn clean install -DskipTests'
    }
+}
+   
+#   Write-Output "Downloading Java (DXA extension) ..."
+#   BuildJava "./repositories/udp-extension-downloader" 'mvn clean install -DskipTests'
 
    Write-Output "Building is done."
    Write-Output ""
@@ -273,6 +287,23 @@ $exclude = @("tmp")
 $files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
 $dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
 Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Fastest -Force
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Copy CMS side artifacts (TBBs, Resolver, CMS content, Import/Export scripts)
 if (Test-Path -Path "./repositories/dxa-content-management/dist")
