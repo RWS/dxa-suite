@@ -154,7 +154,7 @@ if($clone) {
    Write-Output ""
    Write-Output "Cloning github Java repositories ..."
    CloneRepo "dxa-web-application-java" "$webappJavaBranch"
-#   CloneRepo "udp-extension-downloader" "$branch"
+   CloneRepo "udp-extension-downloader" "$branch"
    if(!$isLegacy) {
       if($buildModelService)
       {
@@ -188,9 +188,7 @@ if($build)
       }
       Write-Output ""
       Write-Output ""
-   }
-if ($false)
-{
+
 
    Write-Output "Building Java (DXA framework) ..."
    BuildJava "./repositories/dxa-web-application-java" 'mvn clean install -DskipTests'
@@ -209,9 +207,14 @@ if ($false)
       BuildJava "./repositories/graphql-client-java" 'mvn clean install -DskipTests'
    }
 }
-   
-#   Write-Output "Downloading Java (DXA extension) ..."
-#   BuildJava "./repositories/udp-extension-downloader" 'mvn clean install -DskipTests'
+
+   Write-Output "Downloading Java (DXA extension) ..."
+   BuildJava "./repositories/udp-extension-downloader" 'mvn clean install -DskipTests'
+   Write-Output "  copying udp-extension ..."
+   New-Item -ItemType Directory -Force -Path "artifacts/java/cis/udp-content-dxa-extension/" | Out-Null
+   if(Test-Path -Path "./repositories/udp-extension-downloader/jars/") {
+      Copy-Item -Path "./repositories/udp-extension-downloader/jars/*.zip" -Destination "./artifacts/java/cis/udp-content-dxa-extension/" -Force | Out-Null
+   }
 
    Write-Output "Building is done."
    Write-Output ""
@@ -250,28 +253,27 @@ $dir | ForEach-Object {
    }
 }
 
-Write-Output "Processing DXA Model Service  ..."
-New-Item -ItemType Directory -Force -Path "artifacts/java/cis/dxa-model-service/" | Out-Null
-if (Test-Path -Path "./artifacts/java/cis/dxa-model-service/")
+if ($build)
 {
-   Remove-Item -LiteralPath "./artifacts/java/cis/dxa-model-service/" -Force -Recurse | Out-Null
+   Write-Output "Processing DXA Model Service  ..."
+   New-Item -ItemType Directory -Force -Path "artifacts/java/cis/dxa-model-service/" | Out-Null
+   if (Test-Path -Path "./artifacts/java/cis/dxa-model-service/")
+   {
+      Remove-Item -LiteralPath "./artifacts/java/cis/dxa-model-service/" -Force -Recurse | Out-Null
+   }
+   Write-Output "Unpacking DXA MS standalone ..."
+   $dir = "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip"
+   Expand-Archive -Path $dir -DestinationPath "artifacts/java/tmp/ms-assembly/" -Force
+   Move-Item -Path "artifacts/java/tmp/ms-assembly/" -Destination "artifacts/java/cis/dxa-model-service/"
+
+   Write-Output "Unpacking DXA MS standalone-in-process ..."
+   $dir = "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service.zip"
+   Expand-Archive -Path $dir -DestinationPath "artifacts/java/tmp/ms-assembly/" -Force
+   Move-Item -Path "artifacts/java/tmp/ms-assembly/standalone-in-process/" -Destination "artifacts/java/cis/dxa-model-service/"
 }
-
-Write-Output "Unpacking DXA MS standalone ..."
-$dir = "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip"
-Expand-Archive -Path $dir -DestinationPath "artifacts/java/tmp/ms-assembly/" -Force
-Move-Item -Path "artifacts/java/tmp/ms-assembly/" -Destination "artifacts/java/cis/dxa-model-service/"
-
-Write-Output "Unpacking DXA MS standalone-in-process ..."
-$dir = "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service.zip"
-Expand-Archive -Path $dir -DestinationPath "artifacts/java/tmp/ms-assembly/" -Force
-Move-Item -Path "artifacts/java/tmp/ms-assembly/standalone-in-process/" -Destination "artifacts/java/cis/dxa-model-service/"
-
-Remove-Item -LiteralPath "./artifacts/java/tmp/ms-assembly/" -Force -Recurse | Out-Null
-
-Write-Output "Unpacking UDP Content Service DXA extension ..."
-New-Item -ItemType Directory -Force -Path "artifacts/java/cis/udp-content-dxa-extension/" | Out-Null
-Write-Warning "udp-content-dxa-extension.jar is not provided FTM"
+if (Test-Path -Path "./artifacts/java/tmp/ms-assembly/"){
+   Remove-Item -LiteralPath "./artifacts/java/tmp/ms-assembly/" -Force -Recurse | Out-Null
+}
 
 Write-Output "Processing DXA-suite web installer ..."
 Write-Warning "/web/installer/ is not provided FTM"
@@ -281,28 +283,9 @@ Write-Output "DXA MS prepared in /cis"
 Write-Output ""
 Write-Output ""
 
-
-Remove-Item -LiteralPath "./artifacts/java/tmp/" -Force -Recurse | Out-Null
-$exclude = @("tmp")
-$files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
-$dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
-Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Fastest -Force
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+if (Test-Path -Path "./artifacts/java/tmp/") {
+   Remove-Item -LiteralPath "./artifacts/java/tmp/" -Force -Recurse | Out-Null
+}
 
 
 # Copy CMS side artifacts (TBBs, Resolver, CMS content, Import/Export scripts)
@@ -313,6 +296,10 @@ if (Test-Path -Path "./repositories/dxa-content-management/dist")
    New-Item -ItemType Directory -Force -Path "artifacts/java/ImportExport" | Out-Null
    Copy-Item -Path "./repositories/dxa-content-management/dist/cms/*" -Destination "artifacts/java/cms" -Recurse -Force
    Copy-Item -Path "./repositories/dxa-content-management/dist/ImportExport/*" -Destination "artifacts/java/ImportExport" -Recurse -Force
+}
+else
+{
+   Write-Output "  copying CMS components failed due to no build there."
 }
 # Copy html design src
 if (Test-Path -Path "./repositories/dxa-html-design")
@@ -333,12 +320,31 @@ if (Test-Path -Path "./repositories/dxa-html-design")
    {
       Remove-Item -LiteralPath "./artifacts/java/html-design.zip" | Out-Null
    }
-   Compress-Archive -Path "./artifacts/java/html/design/*" -DestinationPath "artifacts/java/cms/html-design.zip" -CompressionLevel Fastest -Force
+   Compress-Archive -Path "./artifacts/java/html/design/*" -DestinationPath "artifacts/java/cms/html-design.zip" -CompressionLevel Fast -Force
    if (Test-Path "./repositories/dxa-html-design/dist")
    {
       Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/java/html/whitelabel" -Recurse -Force
    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$exclude = @("tmp")
+$files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
+$dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
+Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Fast -Force
+
 
 Write-Output "Packaging Java is done."
 Write-Output ""
@@ -458,7 +464,7 @@ if (Test-Path -Path "./repositories/dxa-html-design")
    {
       Remove-Item -LiteralPath "./artifacts/dotnet/html-design.zip" | Out-Null
    }
-   Compress-Archive -Path "./artifacts/dotnet/html/design/*" -DestinationPath "artifacts/dotnet/cms/html-design.zip" -CompressionLevel Fastest -Force
+   Compress-Archive -Path "./artifacts/dotnet/html/design/*" -DestinationPath "artifacts/dotnet/cms/html-design.zip" -CompressionLevel Fast -Force
    if (Test-Path "./repositories/dxa-html-design/dist")
    {
       Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/dotnet/html/whitelabel" -Recurse -Force
@@ -492,7 +498,7 @@ if (Test-Path "./artifacts/dotnet/$dxa_output_archive")
 
 $exclude = @("nuget", "module_packages", "tmp")
 $files = Get-ChildItem -Path "artifacts/dotnet" -Exclude $exclude
-Compress-Archive -Path $files -DestinationPath "artifacts/dotnet/$dxa_output_archive" -CompressionLevel Fastest -Force
+Compress-Archive -Path $files -DestinationPath "artifacts/dotnet/$dxa_output_archive" -CompressionLevel Fast -Force
 
 Write-Output "Packaging .NET is done."
 Write-Output ""
