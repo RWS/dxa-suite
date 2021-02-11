@@ -170,25 +170,20 @@ if($clone) {
 # Build each dotnet repository and generate artifacts
 if($build)
 {
+   Write-Output "Building .NET (DXA framework) ..."
+   BuildDotnet "./repositories/dxa-web-application-dotnet/ciBuild.proj" $true
+   Write-Output "Building .NET (CM) ..."
+   BuildDotnet "./repositories/dxa-content-management/ciBuild.proj" $true
+   Write-Output "Building .NET (DXA modules) ..."
+   BuildDotnet "./repositories/dxa-modules/webapp-net/ciBuild.proj" $true
 
-   if ($false)
+   if (!$isLegacy)
    {
-
-      Write-Output "Building .NET (DXA framework) ..."
-      BuildDotnet "./repositories/dxa-web-application-dotnet/ciBuild.proj" $true
-      Write-Output "Building .NET (CM) ..."
-      BuildDotnet "./repositories/dxa-content-management/ciBuild.proj" $true
-      Write-Output "Building .NET (DXA modules) ..."
-      BuildDotnet "./repositories/dxa-modules/webapp-net/ciBuild.proj" $true
-
-      if (!$isLegacy)
-      {
-         Write-Output "Building .NET (GraphQL client) ..."
-         BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
-      }
-      Write-Output ""
-      Write-Output ""
-
+      Write-Output "Building .NET (GraphQL client) ..."
+      BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
+   }
+   Write-Output ""
+   Write-Output ""
 
    Write-Output "Building Java (DXA framework) ..."
    BuildJava "./repositories/dxa-web-application-java" 'mvn clean install -DskipTests'
@@ -206,8 +201,7 @@ if($build)
       Write-Output "Building PCA (GraphQL) client ..."
       BuildJava "./repositories/graphql-client-java" 'mvn clean install -DskipTests'
    }
-}
-
+   
    Write-Output "Downloading Java (DXA extension) ..."
    BuildJava "./repositories/udp-extension-downloader" 'mvn clean install -DskipTests'
    Write-Output "  copying udp-extension ..."
@@ -368,7 +362,6 @@ Write-Output ""
 
 
 
-if ($false) {
 
 # Copy artifacts out to /artifacts folder
 # * all nuget packages
@@ -503,6 +496,3 @@ Compress-Archive -Path $files -DestinationPath "artifacts/dotnet/$dxa_output_arc
 Write-Output "Packaging .NET is done."
 Write-Output ""
 Write-Output ""
-
-
-}
