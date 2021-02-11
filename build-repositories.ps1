@@ -169,9 +169,6 @@ if($clone) {
 # Build each dotnet repository and generate artifacts
 if($build)
 {
-if ($false)
-{
-
    Write-Output "Building .NET (DXA framework) ..."
    BuildDotnet "./repositories/dxa-web-application-dotnet/ciBuild.proj" $true
    Write-Output "Building .NET (CM) ..."
@@ -186,7 +183,6 @@ if ($false)
    }
    Write-Output ""
    Write-Output ""
-}
 
    Write-Output "Building Java (DXA framework) ..."
    BuildJava "./repositories/dxa-web-application-java" 'mvn clean install -DskipTests'
@@ -277,6 +273,32 @@ $exclude = @("tmp")
 $files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
 $dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
 Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Fastest -Force
+
+# Copy html design src
+if (Test-Path -Path "./repositories/dxa-html-design")
+{
+   Write-Output "  copying html design ..."
+   New-Item -ItemType Directory -Force -Path "artifacts/java/html" | Out-Null
+   New-Item -ItemType Directory -Force -Path "artifacts/java/html/design" | Out-Null
+   New-Item -ItemType Directory -Force -Path "artifacts/java/html/design/src" | Out-Null
+   New-Item -ItemType Directory -Force -Path "artifacts/java/html/whitelabel" | Out-Null
+   Copy-Item -Path "./repositories/dxa-html-design/src/*" -Destination "artifacts/java/html/design/src" -Recurse -Force -ErrorAction SilentlyContinue
+   Copy-Item -Path "./repositories/dxa-html-design/.bowerrc" -Destination "artifacts/java/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+   Copy-Item -Path "./repositories/dxa-html-design/bower.json" -Destination "artifacts/java/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+   Copy-Item -Path "./repositories/dxa-html-design/BUILD.md" -Destination "artifacts/java/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+   Copy-Item -Path "./repositories/dxa-html-design/Gruntfile.js" -Destination "artifacts/java/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+   Copy-Item -Path "./repositories/dxa-html-design/package.json" -Destination "artifacts/java/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+   Copy-Item -Path "./repositories/dxa-html-design/README.md" -Destination "artifacts/java/html/design" -Recurse -Force -ErrorAction SilentlyContinue
+   if (Test-Path "./artifacts/java/html-design.zip")
+   {
+      Remove-Item -LiteralPath "./artifacts/java/html-design.zip" | Out-Null
+   }
+   Compress-Archive -Path "./artifacts/java/html/design/*" -DestinationPath "artifacts/java/cms/html-design.zip" -CompressionLevel Fastest -Force
+   if (Test-Path "./repositories/dxa-html-design/dist")
+   {
+      Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/java/html/whitelabel" -Recurse -Force
+   }
+}
 
 Write-Output "Packaging Java is done."
 Write-Output ""
