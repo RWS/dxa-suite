@@ -56,10 +56,8 @@ The generated artifacts will be output into an /artifacts folder with the follow
             Whitelabel html design
         /ImportExport
             Scripts/dependencies for working with CM core services for import
-        /module_packages
+        /modules
             All DXA modules packaged individually in zip archives. Self contained with install scripts and CMS content/import scripts.
-        /module_packages
-            Extracted modules for easy installation
         /nuget
             All nuget packages that can be published to nuget.org
         /web

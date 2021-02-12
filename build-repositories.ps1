@@ -121,6 +121,7 @@ if($branch -like "release/1." -and $versionParts[0] -gt 1) {
 }
 
 $isLegacy = $branch.StartsWith("release/1.") -or $version.StartsWith("1.")
+$packageVersion = $version.Substring(0, $version.LastIndexOf("."))
 
 if($clean) {
    Write-Output "Cleaning previously cloned+built repositories & artifacts"
@@ -206,48 +207,17 @@ if($build)
    BuildJava "./repositories/udp-extension-downloader" 'mvn clean install -DskipTests'
    Write-Output "  copying udp-extension ..."
    New-Item -ItemType Directory -Force -Path "artifacts/java/cis/udp-content-dxa-extension/" | Out-Null
-   if(Test-Path -Path "./repositories/udp-extension-downloader/jars/") {
+   if (Test-Path -Path "./repositories/udp-extension-downloader/jars/")
+   {
       Copy-Item -Path "./repositories/udp-extension-downloader/jars/*.zip" -Destination "./artifacts/java/cis/udp-content-dxa-extension/" -Force | Out-Null
    }
 
-   Write-Output "Building is done."
+   Write-Output "Building DXA is done."
    Write-Output ""
    Write-Output ""
 }
 
-$packageVersion = $version.Substring(0, $version.LastIndexOf("."))
-
-# Copy artifacts out to /artifacts folder
-# * all artifacts generated from each repository
-Write-Output "Packaging up Java artifacts ..."
-Write-Output "  \artifacts\java will contain all DXA java artifacts ..."
-
-if(Test-Path -Path "./artifacts/java/tmp") {
-   Remove-Item -LiteralPath "./artifacts/java/tmp" -Force -Recurse | Out-Null
-}
-
-# Copy all modules
-Write-Output "  copying modules ..."
-if(Test-Path -Path "./artifacts/java/module_packages") {
-   Remove-Item -LiteralPath "./artifacts/java/module_packages" -Force -Recurse | Out-Null
-}
-New-Item -ItemType Directory -Force -Path "artifacts/java/module_packages" | Out-Null
-$dir = Get-ChildItem "./repositories/dxa-modules/webapp-java/"
-$dir | ForEach-Object {
-   $sourcePath = $_.FullName + "/target/"
-   if (Test-Path -Path $sourcePath)
-   {
-      Get-ChildItem $sourcePath -Filter *.jar |
-              Foreach-Object {
-                 $targetPath = "artifacts/java/module_packages/" + $_.Name
-                 Write-Output $_.FullName
-
-                 Copy-Item -Path $sourcePath -Destination $targetPath
-              }
-   }
-}
-
-if ($build)
+if ($buildModelService)
 {
    Write-Output "Processing DXA Model Service  ..."
    New-Item -ItemType Directory -Force -Path "artifacts/java/cis/dxa-model-service/" | Out-Null
@@ -256,7 +226,7 @@ if ($build)
       Remove-Item -LiteralPath "./artifacts/java/cis/dxa-model-service/" -Force -Recurse | Out-Null
    }
    if (Test-Path -Path "./artifacts/java/tmp/ms-assembly/"){
-       Remove-Item -LiteralPath "./artifacts/java/tmp/ms-assembly/" -Force -Recurse | Out-Null
+      Remove-Item -LiteralPath "./artifacts/java/tmp/ms-assembly/" -Force -Recurse | Out-Null
    }
    $destPath = "artifacts/java/tmp/ms-assembly"
    Write-Output "Unpacking DXA MS standalone ..."
@@ -270,18 +240,112 @@ if ($build)
    $dir = "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service.zip"
    Expand-Archive -Path $dir -DestinationPath $destPath -Force
    Move-Item -Path "$destPath/standalone-in-process/" -Destination "artifacts/java/cis/dxa-model-service/"
+   if (Test-Path -Path "./artifacts/java/tmp/ms-assembly/"){
+      Remove-Item -LiteralPath "./artifacts/java/tmp/ms-assembly/" -Force -Recurse | Out-Null
+   }
+   Write-Output "DXA MS prepared in /java/cis"
+   Write-Output ""
+   Write-Output ""
 }
-if (Test-Path -Path "./artifacts/java/tmp/ms-assembly/"){
-   Remove-Item -LiteralPath "./artifacts/java/tmp/ms-assembly/" -Force -Recurse | Out-Null
+
+# Copy artifacts out to /artifacts folder
+# * all artifacts generated from each repository
+Write-Output "Packaging up Java artifacts ..."
+Write-Output "  \artifacts\java will contain all DXA java artifacts ..."
+
+if(Test-Path -Path "./artifacts/java/tmp") {
+   Remove-Item -LiteralPath "./artifacts/java/tmp" -Force -Recurse | Out-Null
+}
+
+# Copy all modules
+if(Test-Path -Path "./artifacts/java/module_packages") {
+   Write-Output "  removing modules ..."
+   Remove-Item -LiteralPath "./artifacts/java/module_packages" -Force -Recurse | Out-Null
+}
+Write-Output "  copying modules ..."
+New-Item -ItemType Directory -Force -Path "artifacts/java/module_packages" | Out-Null
+#copying directories with module's names
+$dir = Get-ChildItem "./repositories/dxa-modules/installation/"
+$dir | ForEach-Object {
+
+   if ($_ -is [System.IO.DirectoryInfo]) {
+      $sourcePath = $_.FullName
+      if ($_.Name.Equals("cms")) {
+         #skiping this as it's not a module
+      } else {
+         $moduleName = $_.Name
+         $targetPath = "artifacts/java/module_packages/$moduleName"
+         New-Item -ItemType Directory -Force -Path $targetPath | Out-Null
+         if(Test-Path -Path "$sourcePath/cms/") {
+            Copy-Item -Path "$sourcePath/cms/*" -Destination $targetPath -Recurse
+            if(Test-Path -Path "$targetPath/sites9")
+            {
+                #sites9
+                $files = Get-ChildItem -Path "$targetPath/sites9/content" -Exclude @("tmp")
+                Write-Output "Compressing $targetPath/sites9/module-$moduleName.zip"
+                Compress-Archive -Path $files -DestinationPath "$targetPath/sites9/module-$moduleName.zip" -CompressionLevel Optimal -Force
+                #remove /content folder
+                Remove-Item -LiteralPath "$targetPath/sites9/content" -Force -Recurse | Out-Null
+            }
+            if(Test-Path -Path "$targetPath/web8")
+            {
+                #web8
+                $files = Get-ChildItem -Path "$targetPath/web8/content" -Exclude @("tmp")
+                Write-Output "Compressing $targetPath/web8/module-$moduleName.zip"
+                Compress-Archive -Path $files -DestinationPath "$targetPath/web8/module-$moduleName.zip" -CompressionLevel Optimal -Force
+                #remove /content folder
+                Remove-Item -LiteralPath "$targetPath/web8/content" -Force -Recurse | Out-Null
+            }
+         }
+         if(Test-Path -Path "$sourcePath/scripts/") {
+            Copy-Item -Path "$sourcePath/scripts/*" -Destination $targetPath -Recurse
+         }
+      }
+   }
+}
+
+#copying jar into a module folder /web
+$moduleNameAndJarName = @{
+   "dxa-module-51degrees" = "51Degrees";
+   "dxa-module-audience-manager" = "AudienceManager";
+   "dxa-module-context-expressions" = "ContextExpressions";
+   "dxa-module-core" = "Core";
+   "dxa-module-dynamic-documentation" = "DynamicDocumentation";
+   "dxa-module-smarttarget" = "ExperienceOptimization";
+   "dxa-module-googleanalytics" = "GoogleAnalytics";
+   "dxa-module-mediamanager" = "MediaManager";
+   "dxa-module-search" = "Search";
+   "dxa-module-test" = "Test";
+   "dxa-module-tridion-docs-mashup" = "TridionDocsMashup";
+   "dxa-module-ugc" = "Ugc";
+}
+
+
+$dir = Get-ChildItem "./repositories/dxa-modules/webapp-java/"
+$dir | ForEach-Object {
+   $sourcePath = $_.FullName + "/target/"
+   if (Test-Path -Path $sourcePath)
+   {
+      Get-ChildItem $sourcePath -Filter *.jar |
+           Foreach-Object {
+              $moduleName = $_.Name
+              $moduleFullName = $_.FullName
+              $moduleNameAndJarName.GetEnumerator() | ForEach-Object {
+                 $valMod = $_.Value
+                 if ($moduleName.Contains($_.Key)) {
+                    Write-Output "Copying jar file: $valMod"
+                    $targetPath = "artifacts/java/module_packages/$valMod/web"
+                    New-Item -ItemType Directory -Force -Path $targetPath | Out-Null
+                    Copy-Item -Path $moduleFullName -Destination $targetPath
+                 }
+              }
+           }
+   }
 }
 
 Write-Output "Processing DXA-suite web installer ..."
 Write-Warning "/web/installer/ is not provided FTM"
 # \SDL DXA Java 2.2\web\installer\
-
-Write-Output "DXA MS prepared in /cis"
-Write-Output ""
-Write-Output ""
 
 if (Test-Path -Path "./artifacts/java/tmp/") {
    Remove-Item -LiteralPath "./artifacts/java/tmp/" -Force -Recurse | Out-Null
@@ -293,7 +357,9 @@ if (Test-Path -Path "./repositories/dxa-content-management/dist")
 {
    Write-Output "  copying CMS components ..."
 #   C:\dxa-suite\repositories\dxa-content-management\dist\ImportExport
-   New-Item -ItemType Directory -Force -Path "artifacts/java/cms" | Out-Null
+   if (Test-Path -Path "artifacts/java/ImportExport") {
+      Remove-Item -LiteralPath "artifacts/java/ImportExport" -Force -Recurse | Out-Null
+   }
    New-Item -ItemType Directory -Force -Path "artifacts/java/ImportExport" | Out-Null
    Copy-Item -Path "./repositories/dxa-content-management/dist/cms/*" -Destination "artifacts/java/cms" -Recurse -Force
    Copy-Item -Path "./repositories/dxa-content-management/dist/ImportExport/*" -Destination "artifacts/java/ImportExport" -Recurse -Force
@@ -306,6 +372,10 @@ else
 if (Test-Path -Path "./repositories/dxa-html-design")
 {
    Write-Output "  copying html design ..."
+   if (Test-Path -Path "artifacts/java/cms") {
+      Remove-Item -LiteralPath "artifacts/java/cms" -Force -Recurse | Out-Null
+   }
+   New-Item -ItemType Directory -Force -Path "artifacts/java/cms" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/java/html" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/java/html/design" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/java/html/design/src" | Out-Null
@@ -339,8 +409,6 @@ if (Test-Path -Path "./repositories/dxa-html-design")
 
 
 
-
-
 $exclude = @("tmp")
 $files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
 $dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
@@ -350,25 +418,6 @@ Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archi
 Write-Output "Packaging Java is done."
 Write-Output ""
 Write-Output ""
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # Copy artifacts out to /artifacts folder
 # * all nuget packages
