@@ -21,7 +21,7 @@ The main script 'build-repositories.ps1' lets you clone/build all the repositori
 
 i.e,
 ```
-PS> .\build-repositories -build $true -clone $true -branch release/2.2 -version 2.2.9.0
+PS> .\build-repositories -clean $true -clone $true -build $true -buildModelService $true -branch release/2.2 -webappJavaBranch develop -version 2.2.9.0
 ```
 
 The generated artifacts will be output into an /artifacts folder with the following structure:
@@ -47,6 +47,25 @@ The generated artifacts will be output into an /artifacts folder with the follow
             Example web application                
         
         SDL.DXA.NET.x.y.z.zip (full archive for releasing on github)
+    /java
+        /cis
+            Model service (standalone, in-process) and dxa extension
+        /cms
+            CMS content, import/export scripts, custom resolver, UI extension and template building blocks
+        /html
+            Whitelabel html design
+        /ImportExport
+            Scripts/dependencies for working with CM core services for import
+        /module_packages
+            All DXA modules packaged individually in zip archives. Self contained with install scripts and CMS content/import scripts.
+        /module_packages
+            Extracted modules for easy installation
+        /nuget
+            All nuget packages that can be published to nuget.org
+        /web
+            Example web application                
+        
+        SDL.DXA.Java.x.y.z.zip (full archive for releasing on github)
 ```
 
 Support
