@@ -259,8 +259,12 @@ if(!$isLegacy) {
    if(Test-Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip") {
       Write-Output "  copying CIS components ..."
       New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis" | Out-Null
-      New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis/dxa-model-service" | Out-Null
+      New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis/dxa-model-service" | Out-Null      
       Expand-Archive -Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip" -DestinationPath "artifacts/dotnet/cis/dxa-model-service" -Force
+
+      if(Test-Path "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service.zip") {
+         Expand-Archive -Path "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service.zip" -DestinationPath "artifacts/dotnet/cis/dxa-model-service" -Force         
+      }
    }
 }
 
