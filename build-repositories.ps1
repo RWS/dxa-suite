@@ -380,8 +380,11 @@ $dir | ForEach-Object {
    }
 }
 #copying Core & GoogleAnalytics to /modules
-Copy-Item -Path "artifacts/java/module_packages/Core/" -Destination "artifacts/java/modules/"
-Copy-Item -Path "artifacts/java/module_packages/GoogleAnalytics/" -Destination "artifacts/java/modules/"
+if (Test-Path -Path "./artifacts/java/modules/") {
+   Remove-Item -LiteralPath "./artifacts/java/modules/" -Force -Recurse | Out-Null
+}
+Copy-Item -Path "artifacts/java/module_packages/Core/" -Destination "artifacts/java/modules"
+Copy-Item -Path "artifacts/java/module_packages/GoogleAnalytics/" -Destination "artifacts/java/modules"
 
 if (Test-Path -Path "./artifacts/java/tmp/") {
    Remove-Item -LiteralPath "./artifacts/java/tmp/" -Force -Recurse | Out-Null
@@ -484,12 +487,31 @@ if (Test-Path -Path "./repositories/dxa-html-design")
       Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/java/html/whitelabel" -Recurse -Force
    }
 }
-$dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
 Write-Output " building final distribution package $dxa_output_archive ..."
+# Build final distribution package for DXA
+$dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
+$collapsedVersion = $packageVersion -replace '[.]', ''
+
+Write-Output "  building final distribution package $dxa_output_archive ..."
+
+# Remove old one if it exists
+if (Test-Path "./artifacts/java/$dxa_output_archive")
+{
+   Remove-Item -LiteralPath "./artifacts/java/$dxa_output_archive" | Out-Null
+}
+
 $exclude = @("tmp")
 $files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
 
 Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Optimal -Force
+
+Write-Output " removing all extra stuff ..."
+Remove-Item -LiteralPath "./artifacts/java/cms" -Recurse -Force | Out-Null
+Remove-Item -LiteralPath "./artifacts/java/html" -Recurse -Force | Out-Null
+Remove-Item -LiteralPath "./artifacts/java/ImportExport" -Recurse -Force | Out-Null
+Remove-Item -LiteralPath "./artifacts/java/module_packages" -Recurse -Force | Out-Null
+Remove-Item -LiteralPath "./artifacts/java/modules" -Recurse -Force | Out-Null
+Remove-Item -LiteralPath "./artifacts/java/web" -Recurse -Force | Out-Null
 
 Write-Output "Packaging Java is done."
 Write-Output ""
