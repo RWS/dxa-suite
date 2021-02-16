@@ -160,11 +160,20 @@ if($branch -like "release/1." -and $versionParts[0] -gt 1) {
 $isLegacy = $branch.StartsWith("release/1.") -or $version.StartsWith("1.")
 $packageVersion = $version.Substring(0, $version.LastIndexOf("."))
 
+#if ($false) {
+
+
+
+
+
+
+
+
 if($clean) {
    Write-Output "Cleaning previously cloned+built repositories & artifacts"
    if(Test-Path "./artifacts") {
       Remove-Item -LiteralPath "./artifacts" -Recurse -Force | Out-Null
-   }   
+   }
 
    if(Test-Path "./repositories") {
       Remove-Item -LiteralPath "./repositories" -Recurse -Force | Out-Null
@@ -241,8 +250,10 @@ if($build) {
          BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests'
          #BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests -P in-process'
       }
-      Write-Output "Building PCA (GraphQL) client ..."
-      BuildJava "./repositories/graphql-client-java" 'mvn clean install -DskipTests'
+      if ($buildJava) {
+         Write-Output "Building PCA (GraphQL) client ..."
+         BuildJava "./repositories/graphql-client-java" 'mvn clean install -DskipTests'
+      }
    }
 
    Write-Output "Downloading Java (DXA extension) ..."
@@ -344,20 +355,34 @@ $dir | ForEach-Object {
    }
 }
 
+
+
+
+
+
+
+
+
+#}
+
+
+
+
+
 #copying jar into a module folder /web
 $moduleNameAndJarName = @{
-#   "dxa-module-51degrees" = "51Degrees";
-#   "dxa-module-audience-manager" = "AudienceManager";
-#   "dxa-module-context-expressions" = "ContextExpressions";
+   "dxa-module-51degrees" = "51Degrees";
+   "dxa-module-audience-manager" = "AudienceManager";
+   "dxa-module-context-expressions" = "ContextExpressions";
    "dxa-module-core" = "Core";
-#   "dxa-module-dynamic-documentation" = "DynamicDocumentation";
-#   "dxa-module-smarttarget" = "ExperienceOptimization";
+   "dxa-module-dynamic-documentation" = "DynamicDocumentation";
+   "dxa-module-smarttarget" = "ExperienceOptimization";
    "dxa-module-googleanalytics" = "GoogleAnalytics";
-#   "dxa-module-mediamanager" = "MediaManager";
-#   "dxa-module-search" = "Search";
-#   "dxa-module-test" = "Test";
-#   "dxa-module-tridion-docs-mashup" = "TridionDocsMashup";
-#   "dxa-module-ugc" = "Ugc";
+   "dxa-module-mediamanager" = "MediaManager";
+   "dxa-module-search" = "Search";
+   "dxa-module-test" = "Test";
+   "dxa-module-tridion-docs-mashup" = "TridionDocsMashup";
+   "dxa-module-ugc" = "Ugc";
 }
 
 
@@ -373,7 +398,7 @@ $dir | ForEach-Object {
               $moduleNameAndJarName.GetEnumerator() | ForEach-Object {
                  $valMod = $_.Value
                  if ($moduleName.Contains($_.Key)) {
-                    Write-Output "Copying jar file: $valMod"
+                    Write-Output "Copying module files: $valMod"
                     $targetPath = "artifacts/java/module_packages/$valMod/web"
                     New-Item -ItemType Directory -Force -Path $targetPath | Out-Null
                     Copy-Item -Path $moduleFullName -Destination $targetPath
@@ -388,6 +413,11 @@ if (Test-Path -Path "./artifacts/java/modules/") {
 }
 Copy-Item -Path "artifacts/java/module_packages/Core/" -Destination "artifacts/java/modules"
 Copy-Item -Path "artifacts/java/module_packages/GoogleAnalytics/" -Destination "artifacts/java/modules"
+
+
+#if ($true) {return}
+
+
 
 if (Test-Path -Path "./artifacts/java/tmp/") {
    Remove-Item -LiteralPath "./artifacts/java/tmp/" -Force -Recurse | Out-Null
