@@ -178,12 +178,17 @@ if($clean) {
 if($clone) {
    Write-Output ""
    Write-Output "Cloning github .NET/Java modules repository ..."
-   CloneRepo "dxa-modules" "$branch"
+   CloneRepo "dxa-content-management" "$branch"
+   if(!$isLegacy) {
+       if ($buildModelService) {
+           CloneRepo "dxa-model-service" "$modelServiceBranch"
+       }
+   }
 
    Write-Output ""
    Write-Output "Cloning github .NET repositories ..."
    CloneRepo "dxa-web-application-dotnet" "$branch"
-   CloneRepo "dxa-content-management" "$branch"
+
    CloneRepo "dxa-html-design" "$branch"
    if(!$isLegacy) {
       # model-service & graphql client does not exist in DXA 1.x (legacy DXA versions)
@@ -191,14 +196,11 @@ if($clone) {
    }
    Write-Output ""
    Write-Output "Cloning github Java repositories ..."
+   CloneRepo "dxa-modules" "$branch"
    CloneRepo "dxa-web-application-java" "$webappJavaBranch"
    CloneRepo "udp-extension-downloader" "$branch"
    CloneRepo "dxa-web-installer-java" "master"
    if(!$isLegacy) {
-      if($buildModelService)
-      {
-         CloneRepo "dxa-model-service" "$modelServiceBranch"
-      }
       CloneRepo "graphql-client-java" "$modelServiceBranch"
    }
    Write-Output "Cloning is done."
