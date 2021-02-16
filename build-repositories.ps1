@@ -380,13 +380,12 @@ $dir | ForEach-Object {
    }
 }
 #copying Core & GoogleAnalytics to /modules
-Copy-Item -Path "artifacts/java/module_packages/Core/" -Destination "artifacts/java/modules/Core/"
-Copy-Item -Path "artifacts/java/module_packages/GoogleAnalytics/" -Destination "artifacts/java/modules/GoogleAnalytics/"
+Copy-Item -Path "artifacts/java/module_packages/Core/" -Destination "artifacts/java/modules/"
+Copy-Item -Path "artifacts/java/module_packages/GoogleAnalytics/" -Destination "artifacts/java/modules/"
 
 if (Test-Path -Path "./artifacts/java/tmp/") {
    Remove-Item -LiteralPath "./artifacts/java/tmp/" -Force -Recurse | Out-Null
 }
-
 
 #copying Core & GoogleAnalytics to /modules
 Write-Output "  copying Core & GoogleAnalytics to /modules ..."
@@ -399,8 +398,8 @@ Copy-Item -Path "repositories/dxa-web-installer-java/web/" -Destination "artifac
 if (Test-Path -Path "artifacts/java/cms") {
    Remove-Item -LiteralPath "artifacts/java/cms" -Force -Recurse | Out-Null
 }
-
 New-Item -ItemType Directory -Force -Path "artifacts/java/cms" | Out-Null
+
 Write-Output "  copying ImportExport ..."
 if (Test-Path -Path "artifacts/java/ImportExport") {
    Remove-Item -LiteralPath "artifacts/java/ImportExport" -Force -Recurse | Out-Null
@@ -434,36 +433,32 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
    }
 }
 
-
 New-Item -ItemType Directory -Force -Path "artifacts/java/cms/extensions" | Out-Null
 New-Item -ItemType Directory -Force -Path "artifacts/java/cms/TBBs" | Out-Null
-Write-Output "  copying cms/sites9 ..."
+Write-Output "  copying /cms/sites9 ..."
 testRemoveAndCopy "./repositories/dxa-content-management/cms/content/" "./artifacts/java/cms" "sites9" | Out-Null
-Write-Output "  copying cms/web8 ..."
+Write-Output "  copying /cms/web8 ..."
 testRemoveAndCopy "./repositories/dxa-content-management/cms/content/" "./artifacts/java/cms" "web8" | Out-Null
 Copy-Item -Path "./repositories/dxa-content-management/cms/scripts/*" -Destination "artifacts/java/cms" -Recurse -Force -ErrorAction SilentlyContinue
 
-Write-Output "  copying cms/extensions ..."
+Write-Output "  copying /cms/extensions ..."
 Copy-Item -Path "./repositories/dxa-content-management/dist/cms/extensions/*" -Destination "artifacts/java/cms/extensions/" -Recurse -Force -ErrorAction SilentlyContinue
-Write-Output "  copying cms/TBBs ..."
+Write-Output "  copying /cms/TBBs ..."
 Copy-Item -Path "./repositories/dxa-content-management/dist/cms/TBBs/*" -Destination "artifacts/java/cms/TBBs/" -Recurse -Force -ErrorAction SilentlyContinue
 Copy-Item -Path "./repositories/dxa-content-management/dist/cms/Sdl.Web.DXAResolver.dll" -Destination "artifacts/java/cms/" -Force -ErrorAction SilentlyContinue
 
 if (Test-Path -Path "./repositories/dxa-content-management/dist") {
-   Write-Output "  copying CMS components ..."
+   Write-Output "  copying /cms/ components ..."
    Copy-Item -Path "./repositories/dxa-content-management/dist/cms/*" -Destination "artifacts/java/cms" -Recurse -Force
 }
 else
 {
-   Write-Output "  copying CMS components failed due to no build there."
+   Write-Output "  copying /cms/ components failed due to no build there."
 }
 # Copy html design src
 if (Test-Path -Path "./repositories/dxa-html-design")
 {
-   Write-Output "  copying html design ..."
-   if (Test-Path -Path "artifacts/java/cms") {
-      Remove-Item -LiteralPath "artifacts/java/cms" -Force -Recurse | Out-Null
-   }
+   Write-Output "  copying /cms/html design ..."
    New-Item -ItemType Directory -Force -Path "artifacts/java/cms" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/java/html" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/java/html/design" | Out-Null
@@ -489,12 +484,12 @@ if (Test-Path -Path "./repositories/dxa-html-design")
       Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/java/html/whitelabel" -Recurse -Force
    }
 }
-
+$dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
+Write-Output " building final distribution package $dxa_output_archive ..."
 $exclude = @("tmp")
 $files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
-$dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
-Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Optimal -Force
 
+Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Optimal -Force
 
 Write-Output "Packaging Java is done."
 Write-Output ""
