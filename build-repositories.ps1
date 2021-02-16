@@ -35,6 +35,14 @@ param (
    [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should build the repositories.")]
    [bool]$build = $true,
 
+   # True if we should build .NET
+   [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should build .NET.")]
+   [bool]$buildDotnet = $true,
+
+   # True if we should build Java
+   [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should build Java.")]
+   [bool]$buildJava = $true,
+
    # True if we should build the model-service
    [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should build the model-service.")]
    [bool]$buildModelService = $false,
@@ -199,8 +207,7 @@ if($clone) {
 }
 
 # Build each dotnet repository and generate artifacts
-if($build)
-{
+if($build -and $buildDotnet) {
    Write-Output "Building .NET (DXA framework) ..."
    BuildDotnet "./repositories/dxa-web-application-dotnet/ciBuild.proj" $true
    Write-Output "Building .NET (CM) ..."
@@ -215,7 +222,8 @@ if($build)
    }
    Write-Output ""
    Write-Output ""
-
+}
+if($build -and $buildJava) {
    Write-Output "Building Java (DXA framework) ..."
    BuildJava "./repositories/dxa-web-application-java" 'mvn clean install -DskipTests'
    Write-Output "Building Java (DXA modules) ..."
@@ -247,8 +255,7 @@ if($build)
    Write-Output ""
 }
 
-if ($buildModelService)
-{
+if ($buildModelService -and $buildJava) {
    Write-Output "Processing DXA Model Service  ..."
    New-Item -ItemType Directory -Force -Path "artifacts/java/cis/dxa-model-service/" | Out-Null
    if (Test-Path -Path "./artifacts/java/cis/dxa-model-service/")
