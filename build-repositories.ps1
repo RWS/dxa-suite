@@ -207,32 +207,34 @@ if($clone) {
 }
 
 # Build each dotnet repository and generate artifacts
-if($build -and $buildDotnet) {
-   Write-Output "Building .NET (DXA framework) ..."
-   BuildDotnet "./repositories/dxa-web-application-dotnet/ciBuild.proj" $true
+if($build) {
+   if ($buildDotnet) {
+      Write-Output "Building .NET (DXA framework) ..."
+      BuildDotnet "./repositories/dxa-web-application-dotnet/ciBuild.proj" $true
+   }
    Write-Output "Building .NET (CM) ..."
    BuildDotnet "./repositories/dxa-content-management/ciBuild.proj" $true
-   Write-Output "Building .NET (DXA modules) ..."
-   BuildDotnet "./repositories/dxa-modules/webapp-net/ciBuild.proj" $true
-
-   if (!$isLegacy)
-   {
-      Write-Output "Building .NET (GraphQL client) ..."
-      BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
+   if ($buildDotnet) {
+      Write-Output "Building .NET (DXA modules) ..."
+      BuildDotnet "./repositories/dxa-modules/webapp-net/ciBuild.proj" $true
+      if (!$isLegacy) {
+         Write-Output "Building .NET (GraphQL client) ..."
+         BuildDotnet "./repositories/graphql-client-dotnet/net/Build.csproj" $false
+      }
    }
    Write-Output ""
    Write-Output ""
 }
-if($build -and $buildJava) {
-   Write-Output "Building Java (DXA framework) ..."
-   BuildJava "./repositories/dxa-web-application-java" 'mvn clean install -DskipTests'
-   Write-Output "Building Java (DXA modules) ..."
-   BuildJava "./repositories/dxa-modules/webapp-java" 'mvn clean install -DskipTests'
+if($build) {
+   if ($buildJava) {
+      Write-Output "Building Java (DXA framework) ..."
+      BuildJava "./repositories/dxa-web-application-java" 'mvn clean install -DskipTests'
+      Write-Output "Building Java (DXA modules) ..."
+      BuildJava "./repositories/dxa-modules/webapp-java" 'mvn clean install -DskipTests'
+   }
 
-   if (!$isLegacy)
-   {
-      if ($buildModelService)
-      {
+   if (!$isLegacy) {
+      if ($buildModelService) {
          Write-Output "Building Java (DXA model service) ..."
          BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests'
          #BuildJava "./repositories/dxa-model-service" 'mvn clean install -DskipTests -P in-process'
@@ -245,8 +247,7 @@ if($build -and $buildJava) {
    BuildJava "./repositories/udp-extension-downloader" 'mvn clean install -DskipTests'
    Write-Output "  copying udp-extension ..."
    New-Item -ItemType Directory -Force -Path "artifacts/java/cis/udp-content-dxa-extension/" | Out-Null
-   if (Test-Path -Path "./repositories/udp-extension-downloader/jars/")
-   {
+   if (Test-Path -Path "./repositories/udp-extension-downloader/jars/") {
       Copy-Item -Path "./repositories/udp-extension-downloader/jars/*.zip" -Destination "./artifacts/java/cis/udp-content-dxa-extension/" -Force | Out-Null
    }
 
@@ -255,7 +256,7 @@ if($build -and $buildJava) {
    Write-Output ""
 }
 
-if ($buildModelService -and $buildJava) {
+if ($buildModelService) {
    Write-Output "Processing DXA Model Service  ..."
    New-Item -ItemType Directory -Force -Path "artifacts/java/cis/dxa-model-service/" | Out-Null
    if (Test-Path -Path "./artifacts/java/cis/dxa-model-service/")
