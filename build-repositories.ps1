@@ -487,7 +487,6 @@ if (Test-Path -Path "./repositories/dxa-html-design")
       Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/java/html/whitelabel" -Recurse -Force
    }
 }
-Write-Output " building final distribution package $dxa_output_archive ..."
 # Build final distribution package for DXA
 $dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
 $collapsedVersion = $packageVersion -replace '[.]', ''
@@ -505,7 +504,7 @@ $files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
 
 Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Optimal -Force
 
-Write-Output " removing all extra stuff ..."
+Write-Output "  removing all extra stuff ..."
 Remove-Item -LiteralPath "./artifacts/java/cms" -Recurse -Force | Out-Null
 Remove-Item -LiteralPath "./artifacts/java/html" -Recurse -Force | Out-Null
 Remove-Item -LiteralPath "./artifacts/java/ImportExport" -Recurse -Force | Out-Null
