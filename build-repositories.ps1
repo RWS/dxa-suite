@@ -197,7 +197,7 @@ if($clone) {
    Write-Output "Cloning github Java repositories ..."
    CloneRepo "dxa-modules" "$branch"
    CloneRepo "dxa-web-application-java" "$webappJavaBranch"
-   CloneRepo "udp-extension-downloader" "$branch"
+#   CloneRepo "udp-extension-downloader" "$branch"
    CloneRepo "dxa-web-installer-java" "master"
    if(!$isLegacy) {
       CloneRepo "graphql-client-java" "$modelServiceBranch"
@@ -246,13 +246,13 @@ if($build) {
       }
    }
 
-   Write-Output "Downloading Java (DXA extension) ..."
-   BuildJava "./repositories/udp-extension-downloader" 'mvn clean install -DskipTests'
-   Write-Output "  copying udp-extension ..."
-   New-Item -ItemType Directory -Force -Path "artifacts/java/cis/udp-content-dxa-extension/" | Out-Null
-   if (Test-Path -Path "./repositories/udp-extension-downloader/jars/") {
-      Copy-Item -Path "./repositories/udp-extension-downloader/jars/*.zip" -Destination "./artifacts/java/cis/udp-content-dxa-extension/" -Force | Out-Null
-   }
+#   Write-Output "Downloading Java (DXA extension) ..."
+#   BuildJava "./repositories/udp-extension-downloader" 'mvn clean install -DskipTests'
+#   Write-Output "  copying udp-extension ..."
+#   New-Item -ItemType Directory -Force -Path "artifacts/java/cis/udp-content-dxa-extension/" | Out-Null
+#   if (Test-Path -Path "./repositories/udp-extension-downloader/jars/") {
+#      Copy-Item -Path "./repositories/udp-extension-downloader/jars/*.zip" -Destination "./artifacts/java/cis/udp-content-dxa-extension/" -Force | Out-Null
+#   }
 
    Write-Output "Building DXA is done."
    Write-Output ""
