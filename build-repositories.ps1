@@ -213,7 +213,7 @@ if($build) {
       Write-Output "Building .NET (DXA framework) ..."
       BuildDotnet "./repositories/dxa-web-application-dotnet/ciBuild.proj" $true
    }
-   Write-Output "Building .NET (CM) ..."
+   Write-Output "Building .NET (CM stuff, needed for Java also) ..."
    BuildDotnet "./repositories/dxa-content-management/ciBuild.proj" $true
    if ($buildDotnet) {
       Write-Output "Building .NET (DXA modules) ..."
@@ -409,7 +409,11 @@ if (Test-Path -Path "artifacts/java/ImportExport") {
    Remove-Item -LiteralPath "artifacts/java/ImportExport" -Force -Recurse | Out-Null
 }
 New-Item -ItemType Directory -Force -Path "artifacts/java/ImportExport" | Out-Null
-Copy-Item -Path "./repositories/dxa-content-management/dist/ImportExport/*" -Destination "artifacts/java/ImportExport" -Recurse -Force
+if (Test-Path -Path "./repositories/dxa-content-management/dist/ImportExport/") {
+   Copy-Item -Path "./repositories/dxa-content-management/dist/ImportExport/*" -Destination "artifacts/java/ImportExport" -Recurse -Force
+} else {
+   Write-Warning "  /repositories/dxa-content-management/dist/ImportExport/ not found, please make sure you have met all .NET requirements ti build ..."
+}
 
 if (Test-Path -Path "./repositories/dxa-html-design") {
    Write-Output "  copying html-design ..."
