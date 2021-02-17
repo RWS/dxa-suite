@@ -56,12 +56,12 @@ The generated artifacts will be output into an /artifacts folder with the follow
             Whitelabel html design
         /ImportExport
             Scripts/dependencies for working with CM core services for import
+        /module_packages
+            All DXA modules packaged individually in zip archives. Self contained with CMS content/import scripts.
         /modules
-            All DXA modules packaged individually in zip archives. Self contained with install scripts and CMS content/import scripts.
-        /nuget
-            All nuget packages that can be published to nuget.org
-        /web
-            Example web application                
+            Only Core/GoogleAnalytics modules packaged individually in zip archives. Self contained with only CMS content/import scripts.
+        /web/installer
+            A tool for creating a war (web application archive) of DXA                
         
         SDL.DXA.Java.x.y.z.zip (full archive for releasing on github)
 ```
