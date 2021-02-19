@@ -1,3 +1,5 @@
+#Requires -Version 5.0
+
 <#
 .SYNOPSIS
    Builds the DXA repositories required to generate all required artifacts
@@ -9,7 +11,7 @@
 param (
    # Version to tag with
    [Parameter(Mandatory=$true, HelpMessage="Version to tag build with. In the form of <major>.<minor>.<patch>.<build> (i.e, 2.2.9.0).")]
-   [string]$version = "0.0.0.0",
+   [string]$version,
    
    # The Github branch name to clone
    [Parameter(Mandatory=$false, HelpMessage="Github branch name")]
@@ -610,8 +612,12 @@ if (!$isLegacy) {
    if (Test-Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip") {
       Write-Output "  copying CIS components ..."
       New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis" | Out-Null
-      New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis/dxa-model-service" | Out-Null
+      New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis/dxa-model-service" | Out-Null      
       Expand-Archive -Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip" -DestinationPath "artifacts/dotnet/cis/dxa-model-service" -Force
+
+      if(Test-Path "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service.zip") {
+         Expand-Archive -Path "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service.zip" -DestinationPath "artifacts/dotnet/cis/dxa-model-service" -Force         
+      }
    }
 }
 
