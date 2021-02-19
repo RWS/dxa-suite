@@ -498,7 +498,6 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
 }
 function BuildJavaDistributionPackage(){
    $dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
-   $collapsedVersion = $packageVersion -replace '[.]', ''
 
    Write-Output "  building final distribution package $dxa_output_archive ..."
 
@@ -633,7 +632,6 @@ if (!$isLegacy) {
 
 function BuildDotnetDistributionPackage(){
    $dxa_output_archive = "SDL.DXA.NET.$packageVersion.zip"
-   $collapsedVersion = $packageVersion -replace '[.]', ''
 
    Write-Output "  building final distribution package $dxa_output_archive ..."
 
