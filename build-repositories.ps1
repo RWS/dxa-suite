@@ -160,13 +160,13 @@ function ValidateParametersBranchAndVersionAreAligned(){
       Write-Output "You are trying to build a release/1.x branch and tag with a major version greater than 1 !"
       Exit
    }
-
-   $isLegacy = $branch.StartsWith("release/1.") -or $version.StartsWith("1.")
-   $packageVersion = $version.Substring(0, $version.LastIndexOf("."))
 }
 
 ValidateParametersBranchAndVersionAreAligned
+$isLegacy = $branch.StartsWith("release/1.") -or $version.StartsWith("1.")
+$packageVersion = $version.Substring(0, $version.LastIndexOf("."))
 
+Write-Output $packageVersion
 if($clean) {
    Write-Output "Cleaning previously cloned+built repositories & artifacts"
    if(Test-Path "./artifacts") {
@@ -496,7 +496,7 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
       Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/java/html/whitelabel" -Recurse -Force
    }
 }
-function BuildJavaDistributionPackage(){
+function BuildJavaDistributionPackage($packageVersion){
    $dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
 
    Write-Output "  building final distribution package $dxa_output_archive ..."
@@ -525,7 +525,7 @@ function BuildJavaDistributionPackage(){
 }
 
 # Build final java distribution package for DXA
-BuildJavaDistributionPackage
+BuildJavaDistributionPackage $packageVersion
 
 # Copy artifacts out to /artifacts folder
 # * all nuget packages
@@ -630,7 +630,7 @@ if (!$isLegacy) {
    }
 }
 
-function BuildDotnetDistributionPackage(){
+function BuildDotnetDistributionPackage($packageVersion){
    $dxa_output_archive = "SDL.DXA.NET.$packageVersion.zip"
 
    Write-Output "  building final distribution package $dxa_output_archive ..."
@@ -650,4 +650,4 @@ function BuildDotnetDistributionPackage(){
 
 }
 # Build final distribution package for DXA
-BuildDotnetDistributionPackage
+BuildDotnetDistributionPackage $packageVersion
