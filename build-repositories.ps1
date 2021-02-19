@@ -134,6 +134,11 @@ function testRemoveAndCopy($sourcePath, $destPath, $dirName) {
    }
 }
 
+if ($version.split('.').length -ne 4 ) {
+   Write-Output "You did not provide a correct version format. Check that it's in the form of <major>.<minor>.<patch>.<build> (i.e, 2.2.9.0)."
+   Exit
+}
+
 # Sanity check : if you are building a release branch and the major version component is not the same as that specified by the version param to script then
 # exit
 $versionParts = $version.split('.') | % {iex $_}
