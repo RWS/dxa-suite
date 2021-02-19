@@ -17,15 +17,12 @@ param (
    [Parameter(Mandatory=$false, HelpMessage="Github branch name")]
    [string]$branch = "develop",
 
-   # The Github branch name to clone
    [Parameter(Mandatory=$false, HelpMessage="Github model-service branch name")]
    [string]$modelServiceBranch = "develop",
 
-   # The Github branch name to clone
    [Parameter(Mandatory=$false, HelpMessage="Github dxa-web-application-java branch name")]
    [string]$webappJavaBranch = "develop",
 
-   # The Github branch name to clone
    [Parameter(Mandatory=$false, HelpMessage="Force update if repository already cloned")]
    [bool]$update = $false,
 
