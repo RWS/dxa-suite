@@ -9,7 +9,7 @@
 param (
    # Version to tag with
    [Parameter(Mandatory=$true, HelpMessage="Version to tag build with. In the form of <major>.<minor>.<patch>.<build> (i.e, 2.2.9.0).")]
-   [string]$version = "0.0.0.0",
+   [string]$version,
    
    # The Github branch name to clone
    [Parameter(Mandatory=$false, HelpMessage="Github branch name")]
