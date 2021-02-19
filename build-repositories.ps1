@@ -141,27 +141,31 @@ if ($version.split('.').length -ne 4 ) {
 
 # Sanity check : if you are building a release branch and the major version component is not the same as that specified by the version param to script then
 # exit
-$versionParts = $version.split('.') | % {iex $_}
-if($branch.StartsWith("release/")) {
-    $branchVersionParts = $branch.Replace("release/", "").split('.') | % {iex $_}
-    if($branchVersionParts[0] -ne $versionParts[0]) {
-        Write-Output "You are attempting to build a release branch with a different major version as specified by the version parameter !"
-        Exit
-    }
+function ValidateParametersBranchAndVersionAreAligned(){
+   $versionParts = $version.split('.') | % {iex $_}
+   if($branch.StartsWith("release/")) {
+      $branchVersionParts = $branch.Replace("release/", "").split('.') | % {iex $_}
+      if($branchVersionParts[0] -ne $versionParts[0]) {
+         Write-Output "You are attempting to build a release branch with a different major version as specified by the version parameter !"
+         Exit
+      }
+   }
+
+   if($branch -like "develop" -and $version.StartsWith("1.")) {
+      Write-Output "You are trying to build the develop branch and tag to 1.x.. This isnt a good idea!"
+      Exit
+   }
+
+   if($branch -like "release/1." -and $versionParts[0] -gt 1) {
+      Write-Output "You are trying to build a release/1.x branch and tag with a major version greater than 1 !"
+      Exit
+   }
+
+   $isLegacy = $branch.StartsWith("release/1.") -or $version.StartsWith("1.")
+   $packageVersion = $version.Substring(0, $version.LastIndexOf("."))
 }
 
-if($branch -like "develop" -and $version.StartsWith("1.")) {
-   Write-Output "You are trying to build the develop branch and tag to 1.x.. This isnt a good idea!"
-   Exit
-}
-
-if($branch -like "release/1." -and $versionParts[0] -gt 1) {
-   Write-Output "You are trying to build a release/1.x branch and tag with a major version greater than 1 !"
-   Exit
-}
-
-$isLegacy = $branch.StartsWith("release/1.") -or $version.StartsWith("1.")
-$packageVersion = $version.Substring(0, $version.LastIndexOf("."))
+ValidateParametersBranchAndVersionAreAligned
 
 if($clean) {
    Write-Output "Cleaning previously cloned+built repositories & artifacts"
@@ -492,33 +496,37 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
       Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/java/html/whitelabel" -Recurse -Force
    }
 }
-# Build final distribution package for DXA
-$dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
-$collapsedVersion = $packageVersion -replace '[.]', ''
+function BuildJavaDistributionPackage(){
+   $dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
+   $collapsedVersion = $packageVersion -replace '[.]', ''
 
-Write-Output "  building final distribution package $dxa_output_archive ..."
+   Write-Output "  building final distribution package $dxa_output_archive ..."
 
-# Remove old one if it exists
-if (Test-Path "./artifacts/java/$dxa_output_archive") {
-   Remove-Item -LiteralPath "./artifacts/java/$dxa_output_archive" | Out-Null
+   # Remove old one if it exists
+   if (Test-Path "./artifacts/java/$dxa_output_archive") {
+      Remove-Item -LiteralPath "./artifacts/java/$dxa_output_archive" | Out-Null
+   }
+
+   $exclude = @("tmp")
+   $files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
+
+   Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Optimal -Force
+
+   Write-Output "  removing all extra stuff ..."
+   Remove-Item -LiteralPath "./artifacts/java/cms" -Recurse -Force | Out-Null
+   Remove-Item -LiteralPath "./artifacts/java/html" -Recurse -Force | Out-Null
+   Remove-Item -LiteralPath "./artifacts/java/ImportExport" -Recurse -Force | Out-Null
+   Remove-Item -LiteralPath "./artifacts/java/module_packages" -Recurse -Force | Out-Null
+   Remove-Item -LiteralPath "./artifacts/java/modules" -Recurse -Force | Out-Null
+   Remove-Item -LiteralPath "./artifacts/java/web" -Recurse -Force | Out-Null
+
+   Write-Output "Packaging Java is done."
+   Write-Output ""
+   Write-Output ""
 }
 
-$exclude = @("tmp")
-$files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
-
-Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Optimal -Force
-
-Write-Output "  removing all extra stuff ..."
-Remove-Item -LiteralPath "./artifacts/java/cms" -Recurse -Force | Out-Null
-Remove-Item -LiteralPath "./artifacts/java/html" -Recurse -Force | Out-Null
-Remove-Item -LiteralPath "./artifacts/java/ImportExport" -Recurse -Force | Out-Null
-Remove-Item -LiteralPath "./artifacts/java/module_packages" -Recurse -Force | Out-Null
-Remove-Item -LiteralPath "./artifacts/java/modules" -Recurse -Force | Out-Null
-Remove-Item -LiteralPath "./artifacts/java/web" -Recurse -Force | Out-Null
-
-Write-Output "Packaging Java is done."
-Write-Output ""
-Write-Output ""
+# Build final java distribution package for DXA
+BuildJavaDistributionPackage
 
 # Copy artifacts out to /artifacts folder
 # * all nuget packages
@@ -623,21 +631,25 @@ if (!$isLegacy) {
    }
 }
 
-# Build final distribution package for DXA
-$dxa_output_archive = "SDL.DXA.NET.$packageVersion.zip"
-$collapsedVersion = $packageVersion -replace '[.]', ''
+function BuildDotnetDistributionPackage(){
+   $dxa_output_archive = "SDL.DXA.NET.$packageVersion.zip"
+   $collapsedVersion = $packageVersion -replace '[.]', ''
 
-Write-Output "  building final distribution package $dxa_output_archive ..."
+   Write-Output "  building final distribution package $dxa_output_archive ..."
 
-# Remove old one if it exists
-if (Test-Path "./artifacts/dotnet/$dxa_output_archive") {
-   Remove-Item -LiteralPath "./artifacts/dotnet/$dxa_output_archive" | Out-Null
+   # Remove old one if it exists
+   if (Test-Path "./artifacts/dotnet/$dxa_output_archive") {
+      Remove-Item -LiteralPath "./artifacts/dotnet/$dxa_output_archive" | Out-Null
+   }
+
+   $exclude = @("nuget", "module_packages", "tmp")
+   $files = Get-ChildItem -Path "artifacts/dotnet" -Exclude $exclude
+   Compress-Archive -Path $files -DestinationPath "artifacts/dotnet/$dxa_output_archive" -CompressionLevel Optimal -Force
+
+   Write-Output "Packaging .NET is done."
+   Write-Output ""
+   Write-Output ""
+
 }
-
-$exclude = @("nuget", "module_packages", "tmp")
-$files = Get-ChildItem -Path "artifacts/dotnet" -Exclude $exclude
-Compress-Archive -Path $files -DestinationPath "artifacts/dotnet/$dxa_output_archive" -CompressionLevel Optimal -Force
-
-Write-Output "Packaging .NET is done."
-Write-Output ""
-Write-Output ""
+# Build final distribution package for DXA
+BuildDotnetDistributionPackage
