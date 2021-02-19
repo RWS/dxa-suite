@@ -1,3 +1,5 @@
+#Requires -Version 5.0
+
 <#
 .SYNOPSIS
    Builds the DXA repositories required to generate all required artifacts
