@@ -11,6 +11,7 @@ For building .NET repositories you must have the following installed:
 For building Java repositories you must have the following installed:
 - Maven 3.2+
 - Maven should be available in the system PATH
+- Java 1.8
 
 About
 -----
@@ -20,7 +21,7 @@ The main script 'build-repositories.ps1' lets you clone/build all the repositori
 
 i.e,
 ```
-PS> .\build-repositories -build $true -clone $true -branch release/2.2 -version 2.2.9.0
+PS> .\build-repositories -clean $true -clone $true -build $true -buildModelService $true -branch release/2.2 -webappJavaBranch develop -version 2.2.9.0
 ```
 
 The generated artifacts will be output into an /artifacts folder with the following structure:
@@ -46,6 +47,23 @@ The generated artifacts will be output into an /artifacts folder with the follow
             Example web application                
         
         SDL.DXA.NET.x.y.z.zip (full archive for releasing on github)
+    /java
+        /cis
+            Model service (standalone, in-process) and dxa extension
+        /cms
+            CMS content, import/export scripts, custom resolver, UI extension and template building blocks
+        /html
+            Whitelabel html design
+        /ImportExport
+            Scripts/dependencies for working with CM core services for import
+        /module_packages
+            All DXA modules packaged individually in zip archives. Self contained with CMS content/import scripts.
+        /modules
+            Only Core/GoogleAnalytics modules packaged individually in zip archives. Self contained with only CMS content/import scripts.
+        /web/installer
+            A tool for creating a war (web application archive) of DXA                
+        
+        SDL.DXA.Java.x.y.z.zip (full archive for releasing on github)
 ```
 
 Support
