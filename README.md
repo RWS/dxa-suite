@@ -24,13 +24,16 @@ i.e,
 PS> .\build-repositories -clean $true -clone $true -build $true -buildModelService $true -branch release/2.2 -webappJavaBranch develop -version 2.2.9.0
 ```
 
+### Default behavior
+* the dxa-model-service will not be part of the final artifact unless `-buildModelService $true` is present
+
 The generated artifacts will be output into an /artifacts folder with the following structure:
 
 ```
 /artifacts
     /dotnet
         /cis
-            Model service (standalone, in-process) and dxa extension
+            Model service (standalone, in-process)
         /cms
             CMS content, import/export scripts, custom resolver, UI extension and template building blocks
         /html
