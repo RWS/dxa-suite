@@ -48,17 +48,13 @@ param (
 
    # True if we should clean out all previously cloned repositories and built artifacts
    [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should clean out any previously cloned repositories or built artifacts.")]
-   [bool]$clean = $false
+   [bool]$clean = $false,
+
+   # Build switch parameter to build java or
+   [Parameter(Mandatory=$true, HelpMessage="Indicate if this script should build Java or/and Dotnet. Accepted values are 'java', 'dotnet,'both' or empty")]
+   [ValidateSet('Java','Dotnet','Both','',IgnoreCase)]
+   [string]$buildType
 )
-
-
-#Terminate script on first occurred exception
-$ErrorActionPreference = "Stop"
-
-$PSScriptDir = Split-Path $MyInvocation.MyCommand.Path
-
-# Import msbuild helper module
-Import-Module -Name "$PSScriptDir/utils/Invoke-MsBuild.psm1"
 
 function CloneRepo($repo, $branchName) {
    Write-Output "    > Cloning github repository $repo ..."
@@ -134,11 +130,6 @@ function testRemoveAndCopy($sourcePath, $destPath, $dirName) {
    }
 }
 
-if ($version.split('.').length -ne 4 ) {
-   Write-Output "You did not provide a correct version format. Check that it's in the form of <major>.<minor>.<patch>.<build> (i.e, 2.2.9.0)."
-   Exit
-}
-
 # Sanity check : if you are building a release branch and the major version component is not the same as that specified by the version param to script then
 # exit
 function ValidateParametersBranchAndVersionAreAligned(){
@@ -160,6 +151,92 @@ function ValidateParametersBranchAndVersionAreAligned(){
       Write-Output "You are trying to build a release/1.x branch and tag with a major version greater than 1 !"
       Exit
    }
+}
+
+function BuildDotnetDistributionPackage($packageVersion){
+   $dxa_output_archive = "SDL.DXA.NET.$packageVersion.zip"
+
+   Write-Output "  building final distribution package $dxa_output_archive ..."
+
+   # Remove old one if it exists
+   if (Test-Path "./artifacts/dotnet/$dxa_output_archive") {
+      Remove-Item -LiteralPath "./artifacts/dotnet/$dxa_output_archive" | Out-Null
+   }
+
+   $exclude = @("nuget", "module_packages", "tmp")
+   $files = Get-ChildItem -Path "artifacts/dotnet" -Exclude $exclude
+   Compress-Archive -Path $files -DestinationPath "artifacts/dotnet/$dxa_output_archive" -CompressionLevel Optimal -Force
+
+   Write-Output "Packaging .NET is done."
+   Write-Output ""
+   Write-Output ""
+}
+
+function BuildJavaDistributionPackage($packageVersion){
+   $dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
+
+   Write-Output "  building final distribution package $dxa_output_archive ..."
+
+   # Remove old one if it exists
+   if (Test-Path "./artifacts/java/$dxa_output_archive") {
+      Remove-Item -LiteralPath "./artifacts/java/$dxa_output_archive" | Out-Null
+   }
+
+   $exclude = @("tmp")
+   $files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
+
+   Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Optimal -Force
+
+   Write-Output "  removing all extra stuff ..."
+   Remove-Item -LiteralPath "./artifacts/java/cms" -Recurse -Force | Out-Null
+   Remove-Item -LiteralPath "./artifacts/java/html" -Recurse -Force | Out-Null
+   Remove-Item -LiteralPath "./artifacts/java/ImportExport" -Recurse -Force | Out-Null
+   Remove-Item -LiteralPath "./artifacts/java/module_packages" -Recurse -Force | Out-Null
+   Remove-Item -LiteralPath "./artifacts/java/modules" -Recurse -Force | Out-Null
+   Remove-Item -LiteralPath "./artifacts/java/web" -Recurse -Force | Out-Null
+
+   Write-Output "Packaging Java is done."
+   Write-Output ""
+   Write-Output ""
+}
+
+
+if ($buildType.ToLower() = 'both') {
+   $buildJava = $true
+   $buildDotnet = $true
+   $build = $true
+} else if ($buildType.ToLower() = 'java') {
+   $buildJava = $true
+   $buildDotnet = $false
+   $build = $true
+} else if ($buildType.ToLower() = 'dotnet') {
+   $buildJava = $false
+   $buildDotnet = $true
+   $build = $true
+} else {
+   $buildJava = $false
+   $buildDotnet = $false
+   $build = $false
+}
+
+#Terminate script on first occurred exception
+$ErrorActionPreference = "Stop"
+
+$PSScriptDir = Split-Path $MyInvocation.MyCommand.Path
+
+# Import msbuild helper module
+Import-Module -Name "$PSScriptDir/utils/Invoke-MsBuild.psm1"
+
+if ($buildJava -or $buildDotnet) {
+   #Ok
+} else {
+   Write-Warning "You should provide either 'buildJava' or 'buildDotnet' parameter or both"
+   Exit
+}
+
+if ($version.split('.').length -ne 4 ) {
+   Write-Warning "You did not provide a correct version format. Check that it's in the form of <major>.<minor>.<patch>.<build> (i.e, 2.2.9.0)."
+   Exit
 }
 
 ValidateParametersBranchAndVersionAreAligned
@@ -429,7 +506,7 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
    New-Item -ItemType Directory -Force -Path "artifacts/java/html" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/java/html/design" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/java/html/design/src" | Out-Null
-   New-Item -ItemType Directory -Force -Path "artifacts/java/html/whitelabel" | Out-Null
+#   New-Item -ItemType Directory -Force -Path "artifacts/java/html/whitelabel" | Out-Null
    Copy-Item -Path "./repositories/dxa-html-design/src/*" -Destination "artifacts/java/html/design/src" -Recurse -Force -ErrorAction SilentlyContinue
    Copy-Item -Path "./repositories/dxa-html-design/.bowerrc" -Destination "artifacts/java/html/design" -Recurse -Force -ErrorAction SilentlyContinue
    Copy-Item -Path "./repositories/dxa-html-design/bower.json" -Destination "artifacts/java/html/design" -Recurse -Force -ErrorAction SilentlyContinue
@@ -443,10 +520,10 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
       Remove-Item -LiteralPath "./artifacts/java/html-design.zip" | Out-Null
    }
    Compress-Archive -Path "./artifacts/java/html/design/*" -DestinationPath "artifacts/java/cms/html-design.zip" -CompressionLevel Optimal -Force
-   if (Test-Path "./repositories/dxa-html-design/dist")
-   {
-      Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/java/html/whitelabel" -Recurse -Force
-   }
+#   if (Test-Path "./repositories/dxa-html-design/dist")
+#   {
+#      Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/java/html/whitelabel" -Recurse -Force
+#   }
 }
 
 New-Item -ItemType Directory -Force -Path "artifacts/java/cms/extensions" | Out-Null
@@ -477,7 +554,7 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
    New-Item -ItemType Directory -Force -Path "artifacts/java/html" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/java/html/design" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/java/html/design/src" | Out-Null
-   New-Item -ItemType Directory -Force -Path "artifacts/java/html/whitelabel" | Out-Null
+#   New-Item -ItemType Directory -Force -Path "artifacts/java/html/whitelabel" | Out-Null
    Copy-Item -Path "./repositories/dxa-html-design/src/*" -Destination "artifacts/java/html/design/src" -Recurse -Force -ErrorAction SilentlyContinue
    Copy-Item -Path "./repositories/dxa-html-design/.bowerrc" -Destination "artifacts/java/html/design" -Recurse -Force -ErrorAction SilentlyContinue
    Copy-Item -Path "./repositories/dxa-html-design/bower.json" -Destination "artifacts/java/html/design" -Recurse -Force -ErrorAction SilentlyContinue
@@ -492,37 +569,11 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
       Remove-Item -LiteralPath "./artifacts/java/html-design.zip" | Out-Null
    }
    Compress-Archive -Path "./artifacts/java/html/design/*" -DestinationPath "artifacts/java/cms/html-design.zip" -CompressionLevel Optimal -Force
-   if (Test-Path "./repositories/dxa-html-design/dist") {
-      Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/java/html/whitelabel" -Recurse -Force
-   }
+#   if (Test-Path "./repositories/dxa-html-design/dist") {
+#      Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/java/html/whitelabel" -Recurse -Force
+#   }
 }
-function BuildJavaDistributionPackage($packageVersion){
-   $dxa_output_archive = "SDL.DXA.Java.$packageVersion.zip"
 
-   Write-Output "  building final distribution package $dxa_output_archive ..."
-
-   # Remove old one if it exists
-   if (Test-Path "./artifacts/java/$dxa_output_archive") {
-      Remove-Item -LiteralPath "./artifacts/java/$dxa_output_archive" | Out-Null
-   }
-
-   $exclude = @("tmp")
-   $files = Get-ChildItem -Path "artifacts/java" -Exclude $exclude
-
-   Compress-Archive -Path $files -DestinationPath "artifacts/java/$dxa_output_archive" -CompressionLevel Optimal -Force
-
-   Write-Output "  removing all extra stuff ..."
-   Remove-Item -LiteralPath "./artifacts/java/cms" -Recurse -Force | Out-Null
-   Remove-Item -LiteralPath "./artifacts/java/html" -Recurse -Force | Out-Null
-   Remove-Item -LiteralPath "./artifacts/java/ImportExport" -Recurse -Force | Out-Null
-   Remove-Item -LiteralPath "./artifacts/java/module_packages" -Recurse -Force | Out-Null
-   Remove-Item -LiteralPath "./artifacts/java/modules" -Recurse -Force | Out-Null
-   Remove-Item -LiteralPath "./artifacts/java/web" -Recurse -Force | Out-Null
-
-   Write-Output "Packaging Java is done."
-   Write-Output ""
-   Write-Output ""
-}
 
 # Build final java distribution package for DXA
 BuildJavaDistributionPackage $packageVersion
@@ -598,7 +649,7 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
    New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/design" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/design/src" | Out-Null
-   New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/whitelabel" | Out-Null
+#   New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/whitelabel" | Out-Null
    Copy-Item -Path "./repositories/dxa-html-design/src/*" -Destination "artifacts/dotnet/html/design/src" -Recurse -Force -ErrorAction SilentlyContinue
    Copy-Item -Path "./repositories/dxa-html-design/.bowerrc" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
    Copy-Item -Path "./repositories/dxa-html-design/bower.json" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
@@ -610,9 +661,9 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
       Remove-Item -LiteralPath "./artifacts/dotnet/html-design.zip" | Out-Null
    }
    Compress-Archive -Path "./artifacts/dotnet/html/design/*" -DestinationPath "artifacts/dotnet/cms/html-design.zip" -CompressionLevel Optimal -Force
-   if (Test-Path "./repositories/dxa-html-design/dist") {
-      Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/dotnet/html/whitelabel" -Recurse -Force
-   }
+#   if (Test-Path "./repositories/dxa-html-design/dist") {
+#      Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/dotnet/html/whitelabel" -Recurse -Force
+#   }
 }
 
 # Copy CIS artifacts (model-service standalone and in-process and udp-context-dxa-extension)
@@ -628,26 +679,6 @@ if (!$isLegacy) {
          Expand-Archive -Path "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service.zip" -DestinationPath "artifacts/dotnet/cis/dxa-model-service" -Force         
       }
    }
-}
-
-function BuildDotnetDistributionPackage($packageVersion){
-   $dxa_output_archive = "SDL.DXA.NET.$packageVersion.zip"
-
-   Write-Output "  building final distribution package $dxa_output_archive ..."
-
-   # Remove old one if it exists
-   if (Test-Path "./artifacts/dotnet/$dxa_output_archive") {
-      Remove-Item -LiteralPath "./artifacts/dotnet/$dxa_output_archive" | Out-Null
-   }
-
-   $exclude = @("nuget", "module_packages", "tmp")
-   $files = Get-ChildItem -Path "artifacts/dotnet" -Exclude $exclude
-   Compress-Archive -Path $files -DestinationPath "artifacts/dotnet/$dxa_output_archive" -CompressionLevel Optimal -Force
-
-   Write-Output "Packaging .NET is done."
-   Write-Output ""
-   Write-Output ""
-
 }
 # Build final distribution package for DXA
 BuildDotnetDistributionPackage $packageVersion
