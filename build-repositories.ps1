@@ -46,7 +46,7 @@ param (
 
    # Build switch parameter to build java or
    [Parameter(Mandatory=$true, HelpMessage="Indicate if this script should build Java or/and Dotnet. Accepted values are 'java', 'dotnet,'both' or empty")]
-   [ValidateSet('Java','Dotnet','Both','',IgnoreCase)]
+   [ValidateSet('Java','Dotnet','',IgnoreCase)]
    [string]$buildType
 )
 
@@ -195,11 +195,7 @@ function BuildJavaDistributionPackage($packageVersion){
 }
 
 
-if ($buildType.ToLower() = 'both') {
-   $buildJava = $true
-   $buildDotnet = $true
-   $build = $true
-} elseif ($buildType.ToLower() = 'java') {
+if ($buildType.ToLower() = 'java') {
    $buildJava = $true
    $buildDotnet = $false
    $build = $true
