@@ -12,7 +12,7 @@ param (
    # Version to tag with
    [Parameter(Mandatory=$true, HelpMessage="Version to tag build with. In the form of <major>.<minor>.<patch>.<build> (i.e, 2.2.9.0).")]
    [string]$version,
-   
+
    # The Github branch name to clone
    [Parameter(Mandatory=$false, HelpMessage="Github branch name")]
    [ValidateSet('develop','release/1.8',IgnoreCase)]
@@ -36,14 +36,6 @@ param (
    [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should build the repositories.")]
    [bool]$build = $true,
 
-   # True if we should build .NET
-   [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should build .NET.")]
-   [bool]$buildDotnet = $true,
-
-   # True if we should build Java
-   [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should build Java.")]
-   [bool]$buildJava = $true,
-
    # True if we should build the model-service
    [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should build the model-service.")]
    [bool]$buildModelService = $false,
@@ -66,11 +58,11 @@ function CloneRepo($repo, $branchName) {
       $cmd = "git clone --branch $branchName --recursive $github_repo_url/$repo.git ./repositories/$repo"
       Invoke-Expression $cmd
    }
-   else {    
+   else {
       if($update) {
          Write-Output "    > Updating existing cloned repository ..."
-         Invoke-Expression "git checkout -- ." 
-         Invoke-Expression "git checkout $branchName"         
+         Invoke-Expression "git checkout -- ."
+         Invoke-Expression "git checkout $branchName"
       } else {
          Write-Output "    > Already cloned repository ..."
          Invoke-Expression "git checkout $branchName"
@@ -78,8 +70,8 @@ function CloneRepo($repo, $branchName) {
    }
 }
 
-function RunMsBuild($buildFile, $buildParams) {   
-   Invoke-MsBuild -Path $buildFile -MsBuildParameters $buildParams -ShowBuildOutputInCurrentWindow  
+function RunMsBuild($buildFile, $buildParams) {
+   Invoke-MsBuild -Path $buildFile -MsBuildParameters $buildParams -ShowBuildOutputInCurrentWindow
 }
 
 function BuildDotnet($buildFileLocation, $generateArtifacts) {
@@ -87,7 +79,7 @@ function BuildDotnet($buildFileLocation, $generateArtifacts) {
    $buildFile = Split-Path -Path $buildFileLocation -Leaf
    Push-Location
    Set-Location $location
- 
+
    RunMsBuild $buildFile "/t:Restore"
    RunMsBuild $buildFile "/t:Build /p:Version=$version"
    if($generateArtifacts) {
@@ -207,14 +199,15 @@ if ($buildType.ToLower() = 'both') {
    $buildJava = $true
    $buildDotnet = $true
    $build = $true
-} else if ($buildType.ToLower() = 'java') {
+} elseif ($buildType.ToLower() = 'java') {
    $buildJava = $true
    $buildDotnet = $false
    $build = $true
-} else if ($buildType.ToLower() = 'dotnet') {
+} elseif ($buildType.ToLower() = 'dotnet') {
    $buildJava = $false
    $buildDotnet = $true
    $build = $true
+
 } else {
    $buildJava = $false
    $buildDotnet = $false
@@ -284,7 +277,6 @@ if($clone) {
    Write-Output "Cloning github Java repositories ..."
    CloneRepo "dxa-modules" "$branch"
    CloneRepo "dxa-web-application-java" "$webappJavaBranch"
-#   CloneRepo "udp-extension-downloader" "$branch"
    CloneRepo "dxa-web-installer-java" "master"
    if(!$isLegacy) {
       CloneRepo "graphql-client-java" "$modelServiceBranch"
@@ -332,14 +324,6 @@ if($build) {
          BuildJava "./repositories/graphql-client-java" 'mvn clean install -DskipTests'
       }
    }
-
-#   Write-Output "Downloading Java (DXA extension) ..."
-#   BuildJava "./repositories/udp-extension-downloader" 'mvn clean install -DskipTests'
-#   Write-Output "  copying udp-extension ..."
-#   New-Item -ItemType Directory -Force -Path "artifacts/java/cis/udp-content-dxa-extension/" | Out-Null
-#   if (Test-Path -Path "./repositories/udp-extension-downloader/jars/") {
-#      Copy-Item -Path "./repositories/udp-extension-downloader/jars/*.zip" -Destination "./artifacts/java/cis/udp-content-dxa-extension/" -Force | Out-Null
-#   }
 
    Write-Output "Building DXA is done."
    Write-Output ""
@@ -508,7 +492,6 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
    New-Item -ItemType Directory -Force -Path "artifacts/java/html" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/java/html/design" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/java/html/design/src" | Out-Null
-#   New-Item -ItemType Directory -Force -Path "artifacts/java/html/whitelabel" | Out-Null
    Copy-Item -Path "./repositories/dxa-html-design/src/*" -Destination "artifacts/java/html/design/src" -Recurse -Force -ErrorAction SilentlyContinue
    Copy-Item -Path "./repositories/dxa-html-design/.bowerrc" -Destination "artifacts/java/html/design" -Recurse -Force -ErrorAction SilentlyContinue
    Copy-Item -Path "./repositories/dxa-html-design/bower.json" -Destination "artifacts/java/html/design" -Recurse -Force -ErrorAction SilentlyContinue
@@ -522,10 +505,6 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
       Remove-Item -LiteralPath "./artifacts/java/html-design.zip" | Out-Null
    }
    Compress-Archive -Path "./artifacts/java/html/design/*" -DestinationPath "artifacts/java/cms/html-design.zip" -CompressionLevel Optimal -Force
-#   if (Test-Path "./repositories/dxa-html-design/dist")
-#   {
-#      Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/java/html/whitelabel" -Recurse -Force
-#   }
 }
 
 New-Item -ItemType Directory -Force -Path "artifacts/java/cms/extensions" | Out-Null
@@ -556,7 +535,6 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
    New-Item -ItemType Directory -Force -Path "artifacts/java/html" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/java/html/design" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/java/html/design/src" | Out-Null
-#   New-Item -ItemType Directory -Force -Path "artifacts/java/html/whitelabel" | Out-Null
    Copy-Item -Path "./repositories/dxa-html-design/src/*" -Destination "artifacts/java/html/design/src" -Recurse -Force -ErrorAction SilentlyContinue
    Copy-Item -Path "./repositories/dxa-html-design/.bowerrc" -Destination "artifacts/java/html/design" -Recurse -Force -ErrorAction SilentlyContinue
    Copy-Item -Path "./repositories/dxa-html-design/bower.json" -Destination "artifacts/java/html/design" -Recurse -Force -ErrorAction SilentlyContinue
@@ -571,9 +549,6 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
       Remove-Item -LiteralPath "./artifacts/java/html-design.zip" | Out-Null
    }
    Compress-Archive -Path "./artifacts/java/html/design/*" -DestinationPath "artifacts/java/cms/html-design.zip" -CompressionLevel Optimal -Force
-#   if (Test-Path "./repositories/dxa-html-design/dist") {
-#      Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/java/html/whitelabel" -Recurse -Force
-#   }
 }
 
 
@@ -651,7 +626,6 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
    New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/design" | Out-Null
    New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/design/src" | Out-Null
-#   New-Item -ItemType Directory -Force -Path "artifacts/dotnet/html/whitelabel" | Out-Null
    Copy-Item -Path "./repositories/dxa-html-design/src/*" -Destination "artifacts/dotnet/html/design/src" -Recurse -Force -ErrorAction SilentlyContinue
    Copy-Item -Path "./repositories/dxa-html-design/.bowerrc" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
    Copy-Item -Path "./repositories/dxa-html-design/bower.json" -Destination "artifacts/dotnet/html/design" -Recurse -Force -ErrorAction SilentlyContinue
@@ -663,9 +637,6 @@ if (Test-Path -Path "./repositories/dxa-html-design") {
       Remove-Item -LiteralPath "./artifacts/dotnet/html-design.zip" | Out-Null
    }
    Compress-Archive -Path "./artifacts/dotnet/html/design/*" -DestinationPath "artifacts/dotnet/cms/html-design.zip" -CompressionLevel Optimal -Force
-#   if (Test-Path "./repositories/dxa-html-design/dist") {
-#      Copy-Item -Path "./repositories/dxa-html-design/dist/*" -Destination "artifacts/dotnet/html/whitelabel" -Recurse -Force
-#   }
 }
 
 # Copy CIS artifacts (model-service standalone and in-process and udp-context-dxa-extension)
