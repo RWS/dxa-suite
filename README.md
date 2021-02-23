@@ -16,9 +16,9 @@ The dxa-suite repository contains tools and scripts required to build all DXA re
 
 The main script 'build-repositories.ps1' lets you clone/build all the repositories given a specified branch name, tag with a version number and generate all artifacts in the /artifacts folder.
 
-i.e,
+e.g,
 ```
-PS> .\build-repositories -clean $true -clone $true -build $true -buildModelService $true -branch release/2.2 -webappJavaBranch develop -version 2.2.9.0
+PS> .\build-repositories -version 2.2.9.0 -buildType java
 ```
 
 ### Default behavior
