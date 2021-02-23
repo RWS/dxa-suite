@@ -49,7 +49,7 @@ The generated artifacts will be output into an /artifacts folder with the follow
         SDL.DXA.NET.x.y.z.zip (full archive for releasing on github)
     /java
         /cis
-            Model service (standalone, in-process) and dxa extension
+            Model service (standalone, in-process)
         /cms
             CMS content, import/export scripts, custom resolver, UI extension and template building blocks
         /html
