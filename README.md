@@ -3,12 +3,9 @@ SDL Digital Experience Accelerator Suite
 
 Prerequisites
 -------------
-For building .NET repositories you must have the following installed:
 - Visual Studio 2019
 - .NET Framework 4.5.2 (DXA 1.8)
 - .NET Framework 4.6.2 (DXA 2.0 +)
-
-For building Java repositories you must have the following installed:
 - Maven 3.2+
 - Maven should be available in the system PATH
 - Java 1.8
