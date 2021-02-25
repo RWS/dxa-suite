@@ -42,7 +42,7 @@ param (
 
    # True if we should clean out all previously cloned repositories and built artifacts
    [Parameter(Mandatory=$false, HelpMessage="Indicate if this script should clean out any previously cloned repositories or built artifacts.")]
-   [bool]$clean = $false,
+   [bool]$clean = $true,
 
    # Build switch parameter to build java or
    [Parameter(Mandatory=$true, HelpMessage="Indicate if this script should build Java or/and Dotnet. Accepted values are 'java', 'dotnet' or empty")]
