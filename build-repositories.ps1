@@ -324,13 +324,13 @@ if ($buildModelService) {
    $destPath = "artifacts/java/tmp/ms-assembly"
    Write-Output "Unpacking DXA MS standalone ..."
    New-Item -ItemType Directory -Force -Path $destPath | Out-Null
-   $dir = "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip"
+   $dir = "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service*.zip"
    Expand-Archive -Path $dir -DestinationPath $destPath -Force
    Move-Item -Path $destPath -Destination "artifacts/java/cis/dxa-model-service/"
 
    Write-Output "Unpacking DXA MS standalone-in-process ..."
    New-Item -ItemType Directory -Force -Path $destPath | Out-Null
-   $dir = "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service.zip"
+   $dir = "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service*.zip"
    Expand-Archive -Path $dir -DestinationPath $destPath -Force
    Move-Item -Path "$destPath/standalone-in-process/" -Destination "artifacts/java/cis/dxa-model-service/"
    if (Test-Path -Path "./artifacts/java/tmp/ms-assembly/") {
@@ -651,14 +651,14 @@ function CopyDotnetArtifactsToDirectory(){
    # Copy CIS artifacts (model-service standalone and in-process and udp-context-dxa-extension)
    # only for non-legacy (DXA 2.x+)
    if (!$isLegacy) {
-      if (Test-Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip") {
+      if (Test-Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service*.zip") {
          Write-Output "  copying CIS components ..."
          New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis" | Out-Null
          New-Item -ItemType Directory -Force -Path "artifacts/dotnet/cis/dxa-model-service" | Out-Null
-         Expand-Archive -Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service.zip" -DestinationPath "artifacts/dotnet/cis/dxa-model-service" -Force
+         Expand-Archive -Path "./repositories/dxa-model-service/dxa-model-service-assembly/target/dxa-model-service*.zip" -DestinationPath "artifacts/dotnet/cis/dxa-model-service" -Force
 
-         if(Test-Path "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service.zip") {
-            Expand-Archive -Path "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service.zip" -DestinationPath "artifacts/dotnet/cis/dxa-model-service" -Force
+         if(Test-Path "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service*.zip") {
+            Expand-Archive -Path "./repositories/dxa-model-service/dxa-model-service-assembly-in-process/target/dxa-model-service*.zip" -DestinationPath "artifacts/dotnet/cis/dxa-model-service" -Force
          }
       }
    }
