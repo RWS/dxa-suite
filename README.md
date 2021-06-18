@@ -1,4 +1,4 @@
-SDL Digital Experience Accelerator Suite
+RWS Digital Experience Accelerator Suite
 ===
 
 Prerequisites
@@ -68,7 +68,7 @@ The generated artifacts will be output into an /artifacts folder with the follow
 
 Support
 ---------------
-At SDL we take your investment in Digital Experience very seriously, if you encounter any issues with the Digital Experience Accelerator, please use one of the following channels:
+At RWS we take your investment in Digital Experience very seriously, if you encounter any issues with the Digital Experience Accelerator, please use one of the following channels:
 
 - Report issues directly in [this repository](https://github.com/sdl/dxa-suite/issues)
 - Ask questions 24/7 on the SDL Tridion Community at https://tridion.stackexchange.com
