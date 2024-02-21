@@ -5,7 +5,8 @@ Prerequisites
 -------------
 - Visual Studio 2019
 - .NET Framework 4.5.2 (DXA 1.8)
-- .NET Framework 4.6.2 (DXA 2.0 +)
+- .NET Framework 4.6.2 (DXA 2.2)
+- .NET Framework 4.8 (DXA 2.3 +)
 - Maven 3.2+
 - Maven should be available in the system PATH
 - Java 1.8
@@ -70,14 +71,14 @@ Support
 ---------------
 At RWS we take your investment in Digital Experience very seriously, if you encounter any issues with the Digital Experience Accelerator, please use one of the following channels:
 
-- Report issues directly in [this repository](https://github.com/sdl/dxa-suite/issues)
-- Ask questions 24/7 on the SDL Tridion Community at https://tridion.stackexchange.com
-- Contact SDL Professional Services for DXA release management support packages to accelerate your support requirements
+- Report issues directly in [this repository](https://github.com/rws/dxa-suite/issues)
+- Ask questions 24/7 on the RWS Tridion Community at https://tridion.stackexchange.com
+- Contact RWS Professional Services for DXA release management support packages to accelerate your support requirements
 
 
 License
 -------
-Copyright (c) 2014-2021 SDL Group.
+Copyright (c) 2014-2024 RWS Group.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
